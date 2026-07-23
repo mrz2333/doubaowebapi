@@ -101,59 +101,111 @@
 
 ## 快速开始
 
-### Docker 部署
+### Docker 部署（推荐）
 
-最简单的部署方式，一条命令启动：
+最简单的部署方式。**首次构建需要 5-10 分钟**（下载 Chromium 依赖），请耐心等待。
 
 ```bash
 git clone https://github.com/mrz2333/doubaowebapi.git
 cd doubaowebapi
 cp .env.example .env
 
-# 编辑 .env，设置 DOUBAO_API_KEY（也是 Admin 面板登录密码）
-# 可选：设置 DOUBAO_CDP_URL 连接外部浏览器
+# 编辑 .env，必须设置 DOUBAO_API_KEY（API 鉴权密钥 + Admin 面板登录密码）
+# 如果需要从外部访问服务，将 DOUBAO_HOST 改为 0.0.0.0
 vim .env
 
 docker compose up -d --build
 ```
 
-启动后访问 `http://localhost:8458/health` 确认服务正常运行。
+> ⚠️ **重要**：本项目默认使用 `network_mode: host`，服务直接监听宿主机网络。
+> - `DOUBAO_HOST=127.0.0.1`：只允许本机访问（默认）
+> - `DOUBAO_HOST=0.0.0.0`：允许外部访问
+> - CDP 模式下，`DOUBAO_CDP_URL` 应指向宿主机上实际的 Chromium CDP 地址（如 `http://127.0.0.1:9222`），因为 host 网络模式下容器和宿主机共享网络
+
+**完整 docker-compose.yaml 示例：**
+
+```yaml
+services:
+  doubaowebapi:
+    build: .
+    container_name: doubaowebapi
+    restart: always
+    network_mode: host
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Shanghai
+      - DOUBAO_HOST=127.0.0.1
+      - DOUBAO_PORT=8458
+    volumes:
+      - ./data:/app/data
+```
+
+**启动后验证：**
+
+```bash
+# 等待容器变为 healthy（首次启动需 30-90 秒连接浏览器/注入 Session）
+docker ps | grep doubaowebapi
+
+# 检查健康状态
+curl http://localhost:8458/health
+# 返回 {"status":"ok","logged_in":false} 表示服务已启动但未登录
+```
+
+> **服务启动 ≠ 可用**：必须先完成登录（见下方 QR 扫码登录），`logged_in` 变为 `true` 后才能正常调用 API。
 
 ### pip 安装
 
-如果不想用 Docker，也可以直接 pip 安装：
+不使用 Docker 时的安装方式：
 
 ```bash
+# 1. 克隆仓库
+git clone https://github.com/mrz2333/doubaowebapi.git
+cd doubaowebapi
+
+# 2. 安装浏览器（Patchright，自带反检测补丁的 Playwright fork）
 pip install patchright && patchright install chromium
+
+# 3. 安装项目依赖
 pip install -e .
 
-# 启动服务
+# 4. 启动服务
 DOUBAO_API_KEY=your-secret-key python -m doubaowebapi
 ```
 
 ### QR 扫码登录
 
-服务启动后，需要登录豆包账号才能使用。有两种方式：
+服务启动后，**必须登录豆包账号才能使用 API**。需要手机上的 [豆包 APP](https://www.doubao.com/download/) 扫码。
 
-**方式一：网页扫码**（推荐）
+**方式一：网页扫码**（推荐，有浏览器界面时）
 
-浏览器打开 `http://localhost:8458/auth`，用豆包 APP 扫码。
+在宿主机浏览器打开 `http://localhost:8458/auth`，用豆包 APP 扫描页面上的二维码。
 
-**方式二：API 扫码**
+> 💡 `/auth` 页面是从宿主机浏览器打开的，不是在容器内打开。
+
+**方式二：API 扫码**（无浏览器界面时，如纯服务器环境）
 
 ```bash
-# 触发 QR 登录
+# 1. 触发 QR 登录，获取二维码 Base64 图片
 curl -X POST http://localhost:8458/v1/session/qr-login
 
-# 轮询状态，获取 QR 图片
+# 2. 轮询状态，获取 QR 图片（用手机豆包 APP 扫码）
 curl http://localhost:8458/v1/session/qr-login
+
+# 3. 扫码成功后验证
+curl http://localhost:8458/health
+# 应返回 {"status":"ok","logged_in":true}
 ```
 
-扫码成功后 Cookie 自动保存到 `data/.doubao_session.json`，容器重启后自动加载。
+扫码成功后 Cookie 自动保存到 `data/.doubao_session.json`，容器重启后自动加载，无需重复登录。
+
+**方式三：Admin 面板扫码**
+
+浏览器打开 `http://localhost:8458/admin`，输入 `DOUBAO_API_KEY` 登录后，在面板内点击扫码登录。
 
 ### 从 Session 文件登录
 
-如果你已经有 Cookie，手动创建 `.doubao_session.json`：
+如果你已经有 Cookie（比如从浏览器开发者工具提取），手动创建 `data/.doubao_session.json`：
 
 ```json
 {
@@ -173,23 +225,60 @@ curl http://localhost:8458/v1/session/qr-login
 
 ### CDP 外部浏览器模式
 
-生产环境推荐使用 CDP 模式：在 VNC 桌面里运行 Chromium 并登录豆包，doubaowebapi 通过 CDP 协议连接，直接复用已登录的浏览器会话。
+生产环境推荐使用 CDP 模式：在宿主机（或 VNC 桌面）运行 Chromium 并登录豆包，doubaowebapi 通过 CDP 协议连接，直接复用已登录的浏览器会话。
 
 **优势：**
-- 容器内无需安装 Chromium，镜像更小
+- 容器内无需安装 Chromium，镜像更小、启动更快
 - 风控验证时可在 VNC 桌面手动操作
 - 浏览器指纹完全真实，风控概率更低
+- 登录状态在浏览器侧持久化，容器重建无需重新扫码
 
-**配置：**
+**配置步骤：**
 
-```yaml
-# docker-compose.yaml
-environment:
-  - DOUBAO_CDP_URL=http://127.0.0.1:9222   # CDP 地址
-  - DOUBAO_NOVNC_URL=http://127.0.0.1:6080  # noVNC 地址（风控验证用）
-```
+1. 在宿主机启动 Chromium 并开启 CDP 远程调试：
+   ```bash
+   chromium --remote-debugging-port=9222 --no-first-run --no-default-browser-check
+   ```
+
+2. 在 Chromium 中访问 `https://www.doubao.com/chat/` 并登录豆包
+
+3. 在 `.env` 中配置：
+   ```bash
+   DOUBAO_CDP_URL=http://127.0.0.1:9222
+   DOUBAO_NOVNC_URL=http://127.0.0.1:6080  # 可选，风控验证时跳转
+   ```
+
+> 💡 因为本项目使用 `network_mode: host`，`127.0.0.1:9222` 直接指向宿主机的 Chromium。
 
 不设置 `DOUBAO_CDP_URL` 时，doubaowebapi 自动启动内置 Chromium（Patchright）并通过 Session 文件注入 Cookie。
+
+### 完整部署验证流程
+
+```bash
+# 1. 构建并启动（首次需 5-10 分钟）
+docker compose up -d --build
+
+# 2. 等待容器 healthy
+until docker ps | grep doubaowebapi | grep -q healthy; do sleep 5; done
+
+# 3. 检查服务状态
+curl http://localhost:8458/health
+# 期望：{"status":"ok","logged_in":false}
+
+# 4. 扫码登录（三选一，详见上方）
+curl -X POST http://localhost:8458/v1/session/qr-login
+
+# 5. 验证登录成功
+curl http://localhost:8458/health
+# 期望：{"status":"ok","logged_in":true}
+
+# 6. 测试对话（替换 YOUR_KEY 为你设置的 DOUBAO_API_KEY）
+curl -s http://localhost:8458/v1/chat/completions \
+  -H "Authorization: Bearer YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"doubao","messages":[{"role":"user","content":"说一个字：好"}],"stream":false}'
+# 期望：返回包含 "好" 的 JSON 响应
+```
 
 ## 环境变量
 
