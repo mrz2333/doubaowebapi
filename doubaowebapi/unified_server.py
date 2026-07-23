@@ -1891,7 +1891,7 @@ def create_app(
                 "uptime_seconds": uptime,
                 "rpm_limit": rpm_limit,
                 "host": os.environ.get("DOUBAO_HOST", "0.0.0.0"),
-                "port": int(os.environ.get("DOUBAO_PORT", "8454")),
+                "port": int(os.environ.get("DOUBAO_PORT", "8458")),
                 "keepalive_interval": int(
                     os.environ.get("DOUBAO_KEEPALIVE_INTERVAL", "7200")
                 ),
