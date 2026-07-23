@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Doubao API Console</title>
+<link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon-64.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-title" content="Doubao">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config={theme:{extend:{colors:{
+brand:{50:'#eef2ff',100:'#e0e7ff',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81'},
+surface:{50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',700:'#334155',800:'#1e293b',900:'#0f172a'}
+}}}}
+</script>
+<style>
+[v-cloak]{display:none}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:#0f172a;overscroll-behavior:none}
+/* ── Desktop sidebar ── */
+.sidebar-item{transition:all .15s}
+.sidebar-item:hover{background:rgba(99,102,241,.15)}
+.sidebar-item.active{background:rgba(99,102,241,.2);border-right:3px solid #6366f1}
+.glass{background:rgba(255,255,255,.03);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06)}
+.card{background:#1e293b;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px}
+.card-glow{box-shadow:0 0 20px rgba(99,102,241,.05)}
+.metric{background:linear-gradient(135deg,#1e293b 0%,#1a2332 100%)}
+pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;scrollbar-width:thin}
+pre.out::-webkit-scrollbar{width:6px}
+pre.out::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+.thinking-box{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-left:3px solid #a78bfa}
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+input,select,textarea{background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:10px 14px;font-size:16px} /* 16px prevents iOS zoom */
+input:focus,select:focus,textarea:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
+.btn{padding:8px 18px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.3)}
+.btn:active{transform:scale(.97)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-sm{padding:5px 12px;background:#334155;color:#e2e8f0;border-radius:6px;font-size:12px;border:none;cursor:pointer;white-space:nowrap}
+.btn-sm:hover{background:#475569}
+.btn-sm:active{transform:scale(.97)}
+.btn-warn{padding:8px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-warn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(245,158,11,.3)}
+.btn-warn:active{transform:scale(.97)}
+.chat-md{line-height:1.6}
+.chat-md p{margin:0 0 8px}
+.chat-md p:last-child{margin-bottom:0}
+.chat-md strong{color:#e0e7ff;font-weight:600}
+.chat-md em{color:#c4b5fd}
+.chat-md ul,.chat-md ol{margin:6px 0 8px;padding-left:20px}
+.chat-md ul{list-style:disc}
+.chat-md ol{list-style:decimal}
+.chat-md li{margin:2px 0}
+.chat-md code:not(pre code){background:#0f172a;color:#5eead4;padding:1px 5px;border-radius:4px;font-size:.85em;font-family:'JetBrains Mono',monospace}
+.chat-md pre{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;overflow-x:auto;margin:8px 0}
+.chat-md pre code{color:#86efac;font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.5}
+.chat-md a{color:#93c5fd;text-decoration:underline}
+.chat-md h1,.chat-md h2,.chat-md h3{color:#fff;font-weight:600;margin:10px 0 6px}
+.chat-md h1{font-size:1.1em}.chat-md h2{font-size:1.05em}.chat-md h3{font-size:1em}
+.chat-md blockquote{border-left:3px solid #6366f1;padding-left:10px;color:#94a3b8;margin:6px 0}
+/* ── Mobile bottom tab bar ── */
+.tab-bar-item{transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:10px;color:#64748b;border:none;background:none;cursor:pointer;flex:1;min-width:0}
+.tab-bar-item.active{color:#818cf8}
+.tab-bar-item svg{width:20px;height:20px}
+/* ── Responsive ── */
+@media (max-width:767px){
+  .card{padding:14px;border-radius:10px}
+  .btn,.btn-warn{padding:8px 14px;font-size:13px}
+  .btn-sm{padding:5px 10px;font-size:11px}
+  input,select,textarea{padding:10px 12px}
+  .desktop-only{display:none!important}
+  .mobile-only{display:block!important}
+  .mobile-flex{display:flex!important}
+  .mobile-hidden{display:none!important}
+  .chat-msg-max{max-width:90%!important}
+  /* Fix iOS safe areas */
+  .safe-bottom{padding-bottom:env(safe-area-inset-bottom,8px)}
+  .safe-top{padding-top:env(safe-area-inset-top,0px)}
+}
+@media (min-width:768px){
+  .desktop-only{display:flex!important}
+  .mobile-only{display:none!important}
+  .mobile-flex{display:none!important}
+  .mobile-hidden{display:block!important}
+}
+/* ── Scrollbar ── */
+.overflow-x-auto{-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+.overflow-x-auto::-webkit-scrollbar{height:4px}
+.overflow-x-auto::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+</style>
+</head>
+<body class="min-h-screen text-slate-200">
+<div id="app" v-cloak>
+<!-- ═══ Login Page ═══ -->
+<div v-if="!authed" class="min-h-screen flex items-center justify-center bg-surface-900 px-4">
+<div class="card w-full max-w-sm">
+<div class="flex items-center gap-3 mb-6">
+<img src="/static/img/logo.png" alt="Doubao" class="w-11 h-11 rounded-xl" onerror="this.style.display='none'">
+<div><div class="font-bold text-white text-lg">Doubao Console</div><div class="text-xs text-slate-500">doubaowebapi 管理后台</div></div>
+</div>
+<div v-if="loginErr" class="mb-3 p-2.5 bg-red-900/30 border border-red-800 rounded-lg text-red-300 text-sm">{{loginErr}}</div>
+<div class="mb-4">
+<label class="text-xs text-slate-400 mb-1.5 block">管理密码</label>
+<input type="password" v-model="loginPwd" @keydown.enter="doLogin" class="w-full" placeholder="输入管理密码..." autofocus>
+</div>
+<button @click="doLogin" :disabled="loginLoading" class="btn w-full py-3">
+<span v-if="loginLoading" class="flex items-center justify-center gap-2">
+<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+登录中...</span>
+<span v-else>登录</span></button>
+</div></div>
+
+<!-- ═══ Main App ═══ -->
+<div v-else class="flex flex-col md:flex-row" style="height:100dvh">
+
+<!-- ── Desktop Sidebar ── -->
+<aside class="desktop-only w-56 bg-surface-900 border-r border-slate-800 flex-col shrink-0 hidden">
+<div class="p-5 border-b border-slate-800">
+<div class="flex items-center gap-2">
+<img src="/static/img/logo.png" alt="Doubao" class="w-8 h-8 rounded-lg" onerror="this.style.display='none'">
+<span class="font-bold text-white text-sm">Doubao Console</span>
+</div></div>
+<nav class="flex-1 py-3">
+<button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i"
+:class="['sidebar-item w-full text-left px-5 py-2.5 text-sm flex items-center gap-3',activeTab===i?'active text-white':'text-slate-400']">
+<span v-html="icons[i]"></span>{{tab.name}}</button>
+</nav>
+<div class="p-4 border-t border-slate-800 space-y-2">
+<div class="flex items-center gap-2 text-xs text-slate-500">
+<span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'bg-green-400':'bg-red-400']"></span>
+{{session&&session.logged_in?'已登录':'未登录'}}</div>
+<button @click="doLogout" class="btn-sm w-full text-center">退出登录</button>
+</div></aside>
+
+<!-- ── Main Content ── -->
+<div class="flex-1 flex flex-col overflow-hidden" style="min-height:0">
+<header class="glass px-4 md:px-6 py-3 md:py-4 flex items-center justify-between shrink-0 safe-top">
+<div class="flex items-center gap-2 md:gap-3 min-w-0">
+<h1 class="text-base md:text-lg font-semibold text-white truncate">{{tabs[activeTab].name}}</h1>
+<span class="text-xs text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded font-mono hidden md:inline">v{{sysInfo?.version||'?'}}</span>
+</div>
+<div class="flex items-center gap-2 md:gap-3 shrink-0">
+<div class="flex items-center gap-1.5">
+<span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'bg-green-400 pulse':'bg-red-400']"></span>
+<span class="text-xs hidden md:inline" :class="session&&session.logged_in?'text-green-400':'text-slate-500'">{{session&&session.logged_in?'在线':'离线'}}</span>
+</div>
+<button @click="showMobileMenu=!showMobileMenu" class="mobile-flex md:hidden text-slate-400 p-1">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+</button>
+<span class="text-xs text-slate-500 hidden md:inline">{{currentTime}}</span>
+</div></header>
+
+<!-- Mobile dropdown menu -->
+<div v-if="showMobileMenu" class="md:hidden glass mx-3 mt-2 rounded-xl p-2 flex flex-col gap-1">
+<button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i;showMobileMenu=false"
+:class="['text-left px-4 py-2.5 rounded-lg text-sm flex items-center gap-3',activeTab===i?'bg-brand-600/20 text-white':'text-slate-400']">
+<span v-html="icons[i]"></span>{{tab.name}}</button>
+<div class="border-t border-slate-700 my-1"></div>
+<div class="flex items-center justify-between px-4 py-2">
+<span class="text-xs text-slate-500">版本</span>
+<span class="text-xs text-slate-400 font-mono">v{{sysInfo?.version||'?'}}</span>
+</div>
+<div class="flex items-center justify-between px-4 py-2">
+<span class="text-xs text-slate-500">状态</span>
+<span :class="session&&session.logged_in?'text-green-400':'text-red-400'" class="text-xs">{{session&&session.logged_in?'已登录':'未登录'}}</span>
+</div>
+<button @click="doLogout" class="btn-sm mx-3 mb-1 text-center">退出登录</button>
+</div>
+
+<!-- ── Content Area ── -->
+<div class="flex-1 overflow-y-auto" style="min-height:0;-webkit-overflow-scrolling:touch">
+<div class="p-3 md:p-6 pb-20 md:pb-6">
+
+<!-- ═══ TAB 0: 概览 ═══ -->
+<section v-show="activeTab===0">
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+<div class="metric card card-glow !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">Session</div>
+<div class="flex items-center gap-1.5"><span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'bg-green-400 pulse':'bg-red-400']"></span>
+<span class="text-sm md:text-lg font-semibold" :class="session&&session.logged_in?'text-green-400':'text-red-400'">{{session&&session.logged_in?'已登录':'未登录'}}</span></div></div>
+<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">运行时长</div>
+<div class="text-sm md:text-lg font-semibold text-brand-400">{{fmtDur(sysInfo?sysInfo.uptime_seconds:0)}}</div></div>
+<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">RPM</div>
+<div class="text-sm md:text-lg font-semibold text-white">{{sysInfo?sysInfo.rpm_limit:'--'}}</div></div>
+<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">Cookies</div>
+<div class="text-sm md:text-lg font-semibold text-white">{{cookieData.total}}</div></div>
+<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">连续失败</div>
+<div class="text-sm md:text-lg font-semibold" :class="(health&&health.consecutive_failures||0)>0?'text-amber-400':'text-green-400'">{{health?(health.consecutive_failures||0):0}}</div></div>
+<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">验证码</div>
+<div class="text-sm md:text-lg font-semibold" :class="health&&health.needs_captcha?'text-red-400':'text-green-400'">{{health&&health.needs_captcha?'是':'否'}}</div></div>
+<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">CDP</div>
+<div class="text-sm md:text-lg font-semibold" :class="cdpEnabled?'text-green-400':'text-slate-500'">{{cdpEnabled?'已配置':'未配置'}}</div></div>
+</div>
+
+<!-- Request stats -->
+<div class="card mb-4 md:mb-6" v-if="logStats">
+<div class="flex items-center justify-between mb-3">
+<h3 class="text-sm font-medium text-slate-300">请求统计</h3>
+<button @click="fetchLogStats" class="btn-sm">刷新</button>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-3 md:mb-4">
+<div class="metric card card-glow !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">总请求</div>
+<div class="text-xl md:text-2xl font-bold text-white">{{logStats.total}}</div></div>
+<div class="metric card !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">成功</div>
+<div class="text-xl md:text-2xl font-bold text-green-400">{{logStats.success}}</div></div>
+<div class="metric card !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">失败</div>
+<div class="text-xl md:text-2xl font-bold" :class="logStats.failed>0?'text-red-400':'text-slate-500'">{{logStats.failed}}</div></div>
+<div class="metric card !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">成功率</div>
+<div class="text-xl md:text-2xl font-bold text-brand-400">{{logStats.success_rate}}%</div></div>
+</div>
+<div v-if="logStats.trend&&logStats.trend.length" class="mb-4">
+<div class="text-xs text-slate-400 mb-2">近 7 天趋势</div>
+<div class="flex items-end gap-1 md:gap-2 h-24 md:h-32">
+<div v-for="(d,i) in logStats.trend" :key="i" class="flex-1 flex flex-col items-center gap-1">
+<div class="w-full flex flex-col justify-end h-16 md:h-24 gap-0.5">
+<div class="w-full bg-green-500/70 rounded-t" :style="{height:logStats.trend.length?Math.max(2,(d.success/Math.max(...logStats.trend.map(x=>x.total||1)))*80)+'px':'2px'}" :title="'成功: '+d.success"></div>
+<div class="w-full bg-red-500/70 rounded-b" :style="{height:logStats.trend.length?Math.max(0,(d.failed/Math.max(...logStats.trend.map(x=>x.total||1)))*20)+'px':'0px'}" :title="'失败: '+d.failed"></div>
+</div>
+<span class="text-[10px] md:text-xs text-slate-500 font-mono">{{d.date.slice(5)}}</span>
+</div>
+</div>
+</div>
+<div v-if="logStats.top_models&&logStats.top_models.length">
+<div class="text-xs text-slate-400 mb-2">热门模型</div>
+<div class="flex flex-wrap gap-1.5 md:gap-2">
+<span v-for="m in logStats.top_models" :key="m.model" class="px-2 py-1 bg-brand-900/40 text-brand-300 text-xs rounded-full border border-brand-800/50">{{m.model}} <span class="text-slate-500 ml-1">{{m.count}}</span></span>
+</div>
+</div>
+</div>
+
+<!-- Action buttons -->
+<div class="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 flex-wrap">
+<button @click="fetchOverview" class="btn text-xs md:text-sm">刷新</button>
+<button @click="probeSession" :disabled="probe.loading" class="btn-warn text-xs md:text-sm">{{probe.loading?'测活中...':'测活'}}</button>
+<button @click="resetCaptcha" :disabled="resetCap.loading" class="btn-sm text-xs" title="VNC登录后点此初始化">{{resetCap.loading?'重置中...':'初始化Bridge'}}</button>
+<button @click="saveSession" :disabled="saveSes.loading" class="btn-sm text-xs" title="保存登录状态">{{saveSes.loading?'保存中...':'保存Session'}}</button>
+<span v-if="resetCap.msg" class="text-xs" :class="resetCap.ok?'text-green-400':'text-red-400'">{{resetCap.msg}}</span>
+<span v-if="saveSes.msg" class="text-xs" :class="saveSes.ok?'text-green-400':'text-red-400'">{{saveSes.msg}}</span>
+<span v-if="probe.result" class="text-xs md:text-sm flex items-center gap-1.5">
+<span :class="['w-2 h-2 rounded-full',probe.result==='healthy'?'bg-green-400':'bg-red-400']"></span>
+<span :class="probe.result==='healthy'?'text-green-400':'text-red-400'">{{probe.result}}</span>
+<span class="text-slate-500 ml-1">{{probe.ms}}ms</span>
+</span>
+</div>
+
+<!-- System config -->
+<div class="card mb-4 md:mb-6" v-if="sysInfo">
+<h3 class="text-sm font-medium text-slate-300 mb-3">系统配置</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 text-sm">
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Version</span><span class="text-slate-200 font-mono text-xs">{{sysInfo.version||'--'}}</span></div>
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Platform</span><span class="text-slate-200 font-mono text-xs truncate ml-2">{{sysInfo.platform}}</span></div>
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Python</span><span class="text-slate-200 font-mono text-xs">{{sysInfo.python_version?.split(' ')[0]}}</span></div>
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Listen</span><span class="text-slate-200 font-mono text-xs">{{sysInfo.host}}:{{sysInfo.port}}</span></div>
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Keepalive</span><span class="text-slate-200 text-xs">{{fmtDur(sysInfo.keepalive_interval)}}</span></div>
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Auth</span><span class="text-slate-200 text-xs">{{sysInfo.api_key_mode}}</span></div>
+</div>
+<h3 class="text-sm font-medium text-slate-300 mt-3 md:mt-4 mb-2">可用模型</h3>
+<div class="flex flex-wrap gap-1.5 md:gap-2">
+<span v-for="m in allModels" :key="m" class="px-2 py-1 bg-brand-900/40 text-brand-300 text-xs rounded-full border border-brand-800/50">{{m}}</span>
+</div></div>
+
+<!-- Status details -->
+<div class="card mb-4 md:mb-6" v-if="session">
+<h3 class="text-sm font-medium text-slate-300 mb-3">连接状态</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 text-sm">
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Device ID</span><span class="text-slate-200 font-mono text-xs truncate ml-2">{{session.device_id||'--'}}</span></div>
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Web ID</span><span class="text-slate-200 font-mono text-xs truncate ml-2">{{session.web_id||'--'}}</span></div>
+<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">最近错误</span><span class="text-slate-200 text-xs">{{health?(health.last_error_code||'无'):'--'}}</span></div>
+</div>
+<div v-if="cdpEnabled" class="mt-3 p-2 rounded-lg bg-green-900/20 border border-green-800/50 text-xs text-green-300 flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-green-400 pulse"></span>CDP: <span class="font-mono text-xs truncate">{{cdpUrl}}</span>
+</div></div>
+
+<!-- Cookie table -->
+<div class="card">
+<h3 class="text-sm font-medium text-slate-300 mb-3">Cookies 详情</h3>
+<div v-if="cookieData.cookies.length" class="overflow-x-auto -mx-2 px-2">
+<table class="w-full text-sm"><thead><tr class="text-slate-400 text-left border-b border-slate-700">
+<th class="pb-2 pr-2 md:pr-4 text-xs">#</th><th class="pb-2 pr-2 md:pr-4 text-xs">名称</th><th class="pb-2 pr-2 md:pr-4 text-xs">值</th><th class="pb-2 text-xs">长度</th></tr></thead>
+<tbody><tr v-for="(c,i) in cookieData.cookies" :key="c.name" class="border-b border-slate-800 hover:bg-slate-800/30">
+<td class="py-1.5 pr-2 md:pr-4 text-slate-500 text-xs">{{i+1}}</td>
+<td class="py-1.5 pr-2 md:pr-4 font-mono text-brand-300 whitespace-nowrap text-xs">{{c.name}}</td>
+<td class="py-1.5 pr-2 md:pr-4 font-mono text-slate-300 text-xs break-all max-w-[120px] md:max-w-md">{{c.value}}</td>
+<td class="py-1.5 text-slate-500 text-xs">{{c.length}}</td></tr></tbody></table>
+</div>
+<div v-else class="text-slate-500 text-center py-6 text-sm">暂无 Cookie 数据，请先登录</div>
+</div>
+</section>
+
+<!-- ═══ TAB 1: 登录 ═══ -->
+<section v-show="activeTab===1">
+<div class="card max-w-md mx-auto text-center">
+<div v-if="!qr.img" class="py-6 md:py-8">
+<div class="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden">
+<img src="/static/img/logo.png" alt="Doubao" class="w-16 h-16 object-cover" onerror="this.style.display='none'"></div>
+<p class="text-slate-400 mb-4 text-sm">使用豆包 App 扫码登录</p>
+<button @click="startQr" class="btn">生成二维码</button></div>
+<div v-else class="py-4">
+<div class="bg-white p-2 md:p-3 rounded-xl inline-block mb-3">
+<img :src="'data:image/png;base64,'+qr.img" class="w-36 h-36 md:w-44 md:h-44"/></div>
+<p class="text-sm" :class="qrColor">{{qr.text}}</p>
+<button v-if="qr.st==='expired'||qr.st==='error'" @click="startQr" class="btn mt-4">重新生成</button>
+</div></div>
+<div class="card mt-3 md:mt-4 max-w-2xl mx-auto">
+<details id="vnc-details">
+<summary class="cursor-pointer text-slate-400 text-sm hover:text-slate-200">遇到风控？使用 VNC 手动登录</summary>
+<div class="mt-3">
+<p class="text-xs text-slate-500 mb-2">如果二维码反复过期或触发验证码，请通过 noVNC 手动操作浏览器。</p>
+<button @click="loadVnc" class="btn-sm mb-2">加载 noVNC</button>
+<div id="vnc-container"></div>
+</div></details></div>
+<div class="card mt-3 md:mt-4 max-w-2xl mx-auto">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm text-slate-300">浏览器截图</span>
+<button @click="takeScreenshot" class="btn-sm">{{screenshot.loading?'截图中...':'截图'}}</button></div>
+<div v-if="screenshot.img" class="mt-2">
+<img :src="screenshot.img" class="w-full rounded-lg border border-slate-700" />
+<p class="text-xs text-slate-500 mt-1">{{screenshot.time}}</p></div>
+<div v-else class="text-xs text-slate-500 text-center py-4">点击截图查看浏览器当前画面</div>
+</div></section>
+
+<!-- ═══ TAB 2: 聊天测试 ═══ -->
+<section v-show="activeTab===2" class="flex flex-col" :style="{height:'calc(100dvh - 120px)'}">
+<!-- Top bar -->
+<div class="glass px-2 md:px-4 py-2 flex items-center gap-1.5 md:gap-3 flex-wrap shrink-0 border-b border-slate-800">
+<div class="flex items-center gap-1 md:gap-2">
+<label class="text-xs text-slate-400 hidden md:inline">模型</label>
+<select v-model="chat.model" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-28 md:!w-36">
+<option v-for="m in chatModels" :key="m" :value="m">{{m}}</option></select></div>
+<div class="flex items-center gap-1 md:gap-2" v-if="!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video'&&chat.model!=='doubao-music'">
+<select v-model="chat.stream" class="!py-1.5 !px-1.5 md:!px-2 text-sm">
+<option :value="true">流式</option><option :value="false">非流式</option></select></div>
+<!-- Image options -->
+<template v-if="chat.model.startsWith('doubao-image')">
+<select v-model="chat.imgModel" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-32">
+<option value="seedream-5.0-pro">5.0 Pro</option><option value="seedream-5.0-lite">5.0 Lite</option>
+<option value="seedream-4.5">4.5</option><option value="seedream-4.0">4.0</option></select>
+<select v-model="chat.imgRatio" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-36">
+<option value="1:1">1:1</option><option value="2:3">2:3</option><option value="3:4">3:4</option>
+<option value="4:3">4:3</option><option value="9:16">9:16</option><option value="16:9">16:9</option></select>
+<select v-model="chat.imgStyle" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-32">
+<option value="">风格</option><option v-for="s in imageStyles" :key="s" :value="s">{{s}}</option></select>
+</template>
+<!-- Video options -->
+<template v-if="chat.model==='doubao-video'">
+<select v-model="chat.videoRatio" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-28">
+<option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option></select>
+<select v-model="chat.videoDuration" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-16 md:!w-20">
+<option value="5">5s</option><option value="10">10s</option></select>
+</template>
+<!-- Music options -->
+<template v-if="chat.model==='doubao-music'">
+<select v-model="chat.musicGenre" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-28">
+<option value="">自动</option><option value="pop">流行</option><option value="rock">摇滚</option>
+<option value="classical">古典</option><option value="electronic">电子</option></select>
+</template>
+<button @click="clearChat" class="btn-sm text-xs ml-auto">清空</button>
+</div>
+<!-- Messages -->
+<div ref="chatScroll" class="flex-1 overflow-y-auto px-3 md:px-4 py-3 md:py-4 space-y-3 md:space-y-4" style="min-height:0;-webkit-overflow-scrolling:touch">
+<div v-if="!chat.messages.length" class="flex flex-col items-center justify-center h-full text-slate-600 text-xs md:text-sm gap-3">
+<img src="/static/img/logo.png" alt="Doubao" class="w-10 h-10 md:w-12 md:h-12 opacity-40 rounded-xl" onerror="this.style.display='none'">
+<span v-if="chat.model.startsWith('doubao-image')">描述要生成的图片 🖼️</span>
+<span v-else-if="chat.model==='doubao-video'">描述要生成的视频 🎬</span>
+<span v-else-if="chat.model==='doubao-music'">描述要生成的音乐 🎵</span>
+<span v-else>开始对话…</span></div>
+<div v-for="(m,i) in chat.messages" :key="i" :class="['flex',m.role==='user'?'justify-end':'justify-start']">
+<div :class="['max-w-[80%] chat-msg-max rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-sm',
+m.role==='user'?'bg-brand-600 text-white rounded-br-sm':'bg-slate-800 text-slate-200 rounded-bl-sm border border-slate-700']">
+<details v-if="m.thinking" class="mb-2 thinking-box rounded-lg p-2" :open="m.thinkOpen" @toggle="m.thinkOpen=$event.target.open">
+<summary class="cursor-pointer text-xs text-purple-300 flex items-center gap-1.5 select-none">
+<svg class="w-3 h-3 md:w-3.5 md:h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l8 6-8 6V4z"/></svg>
+思考过程 ({{m.thinking.length}} chars)</summary>
+<pre class="out text-purple-200 text-xs leading-relaxed mt-2 whitespace-pre-wrap">{{m.thinking}}</pre></details>
+<div v-if="m.searchResults" class="mb-2">
+<div class="flex items-center gap-1 md:gap-2 mb-1">
+<svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+<span class="text-xs text-blue-400">{{m.searchResults.summary}}</span></div></div>
+<div v-if="m.role==='assistant'" class="chat-md text-sm" v-html="renderMd(m.content)"></div>
+<div v-else class="whitespace-pre-wrap text-sm">{{m.content}}</div>
+<div v-if="m.media" class="mt-2 md:mt-3 space-y-2">
+<div v-if="m.media.images&&m.media.images.length" class="grid grid-cols-2 gap-1.5 md:gap-2">
+<div v-for="(u,j) in m.media.images" :key="'img'+j" class="relative">
+<img :src="u" class="w-full rounded-lg border border-slate-700 cursor-pointer" @click="previewImage=u" loading="lazy"/></div></div>
+<a v-for="(u,j) in (m.media.videos||[])" :key="'vid'+j" :href="u" target="_blank" class="block text-xs text-blue-300 hover:underline">🎬 视频 #{{j+1}} ⬇️</a>
+<a v-for="(u,j) in (m.media.audios||[])" :key="'aud'+j" :href="u" target="_blank" class="block text-xs text-blue-300 hover:underline">🎵 音频 #{{j+1}} ⬇️</a></div>
+<div v-if="previewImage" @click="previewImage=null" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 md:p-8 cursor-pointer">
+<img :src="previewImage" class="max-w-full max-h-full rounded-lg"/></div>
+<div class="flex items-center gap-2 mt-1 text-xs" :class="m.role==='user'?'text-brand-200/70':'text-slate-500'">
+<span>{{m.role==='user'?'你':'AI'}}</span>
+<span v-if="m.ms" class="font-mono">{{m.ms}}ms</span>
+<span v-if="m.streaming" class="inline-block w-1.5 h-3.5 bg-brand-400 pulse"></span>
+</div></div></div></div>
+<!-- Input -->
+<div class="glass border-t border-slate-800 px-3 md:px-4 py-2.5 md:py-3 shrink-0 safe-bottom">
+<div v-if="chat.error" class="mb-2 p-2 bg-red-900/30 border border-red-800 rounded text-red-300 text-xs">{{chat.error}}</div>
+<div class="flex items-end gap-2">
+<textarea v-model="chat.input" @keydown="onChatKeydown" rows="2"
+class="flex-1 text-sm resize-none !py-2" :placeholder="chatPlaceholder" :disabled="chat.loading"></textarea>
+<button @click="sendChat" :disabled="!chat.input.trim()||chat.loading" class="btn self-stretch text-sm !px-4">
+<span v-if="chat.loading" class="flex items-center gap-1">
+<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg></span>
+<span v-else>{{chat.model.startsWith('doubao-image')?'生图':chat.model==='doubao-video'?'生视频':chat.model==='doubao-music'?'生音乐':'发送'}}</span></button></div></div>
+</section>
+
+<!-- ═══ TAB 3: 请求日志 ═══ -->
+<section v-show="activeTab===3">
+<div class="card">
+<div class="flex items-center justify-between mb-3 md:mb-4">
+<span class="text-xs text-slate-400">最近 100 条 (5s 刷新)</span>
+<button @click="fetchLogs" class="btn-sm">刷新</button></div>
+<div class="overflow-x-auto -mx-2 px-2">
+<table class="w-full text-sm min-w-[480px]">
+<thead><tr class="text-left text-xs text-slate-500 border-b border-slate-700">
+<th class="py-2 px-1 md:px-3">时间</th><th class="py-2 px-1 md:px-3">方法</th><th class="py-2 px-1 md:px-3">路径</th>
+<th class="py-2 px-1 md:px-3">模型</th><th class="py-2 px-1 md:px-3">状态</th><th class="py-2 px-1 md:px-3">耗时</th></tr></thead>
+<tbody><tr v-for="(l,i) in logs" :key="i" class="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
+<td class="py-2 px-1 md:px-3 text-slate-400 font-mono text-xs">{{fmtTime(l.ts)}}</td>
+<td class="py-2 px-1 md:px-3"><span class="px-1.5 py-0.5 rounded text-xs font-medium" :class="l.method==='POST'?'bg-amber-900/40 text-amber-300':'bg-blue-900/40 text-blue-300'">{{l.method}}</span></td>
+<td class="py-2 px-1 md:px-3 font-mono text-xs text-slate-300 max-w-[100px] md:max-w-xs truncate">{{l.path}}</td>
+<td class="py-2 px-1 md:px-3 text-xs text-brand-400">{{l.model||'-'}}</td>
+<td class="py-2 px-1 md:px-3"><span :class="l.status<400?'text-green-400':'text-red-400'" class="font-mono text-xs">{{l.status}}</span></td>
+<td class="py-2 px-1 md:px-3 text-slate-400 font-mono text-xs">{{l.ms}}ms</td></tr>
+<tr v-if="!logs.length"><td colspan="6" class="py-8 text-center text-slate-500 text-sm">暂无请求记录</td></tr>
+</tbody></table></div></div></section>
+
+<!-- ═══ TAB 4: API Keys ═══ -->
+<section v-show="activeTab===4">
+<div class="card mb-4 md:mb-6">
+<div class="flex items-center justify-between mb-3 md:mb-4">
+<h3 class="text-sm font-medium text-slate-300">API Keys 管理</h3>
+<button @click="keys.showCreate=!keys.showCreate" class="btn-sm">{{keys.showCreate?'取消':'创建 Key'}}</button>
+</div>
+<div v-if="keys.showCreate" class="mb-4 p-3 md:p-4 rounded-lg bg-slate-800/50 border border-slate-700">
+<div class="flex flex-col md:flex-row items-stretch md:items-end gap-2 md:gap-3">
+<div class="flex-1">
+<label class="text-xs text-slate-400 mb-1.5 block">名称</label>
+<input v-model="keys.newName" type="text" class="w-full" placeholder="例如：生产环境 / 测试">
+</div>
+<div class="w-full md:w-32">
+<label class="text-xs text-slate-400 mb-1.5 block">过期天数 (可选)</label>
+<input v-model="keys.newExpires" type="number" min="1" class="w-full" placeholder="留空=永久">
+</div>
+<button @click="createKey" :disabled="keys.loading" class="btn w-full md:w-auto">{{keys.loading?'创建中...':'创建'}}</button>
+</div>
+</div>
+<div v-if="keys.newKey" class="mb-4 p-3 md:p-4 rounded-lg bg-amber-900/20 border border-amber-700/50">
+<div class="flex items-center gap-2 mb-2">
+<svg class="w-4 h-4 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+<span class="text-xs md:text-sm text-amber-300 font-medium">请立即复制，仅显示一次</span>
+</div>
+<div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+<code class="flex-1 px-3 py-2 bg-slate-900 rounded text-green-400 text-xs md:text-sm font-mono break-all">{{keys.newKey.key}}</code>
+<button @click="copyKey(keys.newKey.key)" class="btn-sm shrink-0">复制</button>
+</div>
+<div class="text-xs text-slate-400 mt-2">名称: {{keys.newKey.name}}</div>
+<button @click="keys.newKey=null" class="btn-sm mt-3">我已保存</button>
+</div>
+</div>
+<!-- Key list -->
+<div class="card">
+<div class="flex items-center justify-between mb-3 md:mb-4">
+<span class="text-xs text-slate-400">共 {{keys.list.length}} 个 Key</span>
+<button @click="fetchKeys" class="btn-sm">刷新</button>
+</div>
+<div class="overflow-x-auto -mx-2 px-2">
+<table class="w-full text-sm min-w-[600px]">
+<thead><tr class="text-left text-xs text-slate-500 border-b border-slate-700">
+<th class="py-2 px-1 md:px-3">名称</th><th class="py-2 px-1 md:px-3">Key 前缀</th><th class="py-2 px-1 md:px-3">状态</th><th class="py-2 px-1 md:px-3">请求数</th><th class="py-2 px-1 md:px-3">过期时间</th><th class="py-2 px-1 md:px-3">操作</th></tr></thead>
+<tbody>
+<tr v-for="k in keys.list" :key="k.id" class="border-b border-slate-800 hover:bg-slate-800/30">
+<td class="py-2 px-1 md:px-3">
+<span class="text-slate-200 text-xs">{{k.name}}</span>
+<span v-if="k.is_primary" class="ml-1 px-1 py-0.5 rounded text-xs font-medium bg-purple-900/40 text-purple-300 border border-purple-800/50">主密钥</span>
+</td>
+<td class="py-2 px-1 md:px-3 font-mono text-xs text-brand-300">{{k.key_prefix}}</td>
+<td class="py-2 px-1 md:px-3">
+<span v-if="k.is_primary" class="px-1.5 py-0.5 rounded text-xs bg-green-900/40 text-green-300">始终有效</span>
+<span v-else-if="k.is_active" class="px-1.5 py-0.5 rounded text-xs bg-green-900/40 text-green-300">启用</span>
+<span v-else class="px-1.5 py-0.5 rounded text-xs bg-slate-700 text-slate-400">已禁用</span>
+</td>
+<td class="py-2 px-1 md:px-3 text-slate-400 font-mono text-xs">{{k.request_count===null||k.request_count===undefined?'—':k.request_count}}</td>
+<td class="py-2 px-1 md:px-3 text-slate-400 text-xs">{{k.expires_at?fmtDateTime(k.expires_at):'永久'}}</td>
+<td class="py-2 px-1 md:px-3">
+<div v-if="!k.is_primary" class="flex items-center gap-1 md:gap-2">
+<button @click="toggleKey(k.id)" class="btn-sm text-xs">{{k.is_active?'禁用':'启用'}}</button>
+<button @click="deleteKey(k.id,k.name)" class="btn-sm text-xs" style="background:#7f1d1d;color:#fecaca">删除</button>
+</div>
+<span v-else class="text-xs text-slate-600">—</span>
+</td>
+</tr>
+<tr v-if="!keys.list.length"><td colspan="6" class="py-8 text-center text-slate-500 text-sm">暂无 API Key</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+
+</div></div>
+</div>
+
+<!-- ═══ Mobile Bottom TabBar ═══ -->
+<nav class="mobile-flex md:hidden glass border-t border-slate-800 shrink-0 safe-bottom" style="display:none">
+<button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i"
+:class="['tab-bar-item',activeTab===i?'active':'']">
+<span v-html="icons[i]"></span>{{tab.name}}</button>
+</nav>
+
+</div></div>
+
+<script>
+const NOVNC_URL="{{NOVNC_URL}}";
+const{createApp,ref,reactive,computed,onMounted}=Vue;
+createApp({setup(){
+const API=window.location.origin;
+const authed=ref(false);
+const loginPwd=ref('');
+const loginErr=ref('');
+const loginLoading=ref(false);
+const authToken=ref(localStorage.getItem('doubao_admin_token')||'');
+const apiKey=ref(localStorage.getItem('doubao_api_key')||'');
+const showMobileMenu=ref(false);
+function getApiHeaders(){return{'Authorization':'Bearer '+(apiKey.value||authToken.value||''),'Content-Type':'application/json'}}
+function setCookie(name,value,days){const d=new Date();d.setTime(d.getTime()+days*864e5);document.cookie=name+'='+value+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}
+function delCookie(name){document.cookie=name+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'}
+function getHeaders(){return{'Authorization':'Bearer '+(authToken.value||''),'Content-Type':'application/json'}}
+const tabs=ref([{name:'概览'},{name:'登录'},{name:'聊天测试'},{name:'请求日志'},{name:'API Keys'}]);
+const icons=[
+'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>',
+'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>',
+'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
+'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>'];
+const activeTab=ref(0);
+const session=ref(null);
+const sysInfo=ref(null);
+const cookieData=reactive({cookies:[],total:0,file:null});
+const probe=reactive({loading:false,result:'',ms:0,time:''});
+const resetCap=reactive({loading:false,msg:'',ok:false});
+const saveSes=reactive({loading:false,msg:'',ok:false});
+const qr=reactive({img:'',st:'',text:'等待生成'});
+const health=ref(null);
+const cdpUrl=ref('');
+const cdpEnabled=computed(()=>!!cdpUrl.value);
+const chat=reactive({model:'doubao-think',stream:true,input:'',loading:false,error:'',messages:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5',musicGenre:''});
+const chatModels=computed(()=>{const base=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music'];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
+const chatScroll=ref(null);
+const previewImage=ref(null);
+const chatPlaceholder=computed(()=>chat.model.startsWith('doubao-image')?'描述要生成的图片...':chat.model==='doubao-video'?'描述要生成的视频...':chat.model==='doubao-music'?'描述要生成的音乐...':'输入消息...');
+const logs=ref([]);
+const logStats=ref(null);
+const screenshot=reactive({img:"",loading:false,time:""});
+const keys=reactive({list:[],loading:false,showCreate:false,newName:'',newExpires:'',newKey:null});
+const currentTime=ref('');
+const allModels=['doubao','doubao-quick','doubao-think','doubao-auto','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music'];
+const imageStyles=['人像摄影','电影写真','中国风','动漫','3D渲染','赛博朋克','CG动画','水墨画','油画','古典','水彩画','卡通','平面插画','风景','港风动漫','像素风格','荧光绘画','彩铅画','手办','儿童绘画','抽象','锐笔插画','二次元','油墨印刷','版画','莫奈','毕加索','伦勃朗','马蒂斯','巴洛克','复古动漫','绘本'];
+const qrColor=computed(()=>({'text-green-400':qr.st==='success'||qr.st==='confirmed','text-yellow-400':qr.st==='scanned','text-slate-400':qr.st==='waiting_scan','text-red-400':qr.st==='expired'||qr.st==='failed'}));
+function fmtDur(s){if(!s&&s!==0)return'N/A';s=Math.round(s);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m '+s%60+'s';const h=Math.floor(s/3600);return h+'h '+Math.floor((s%3600)/60)+'m'}
+function fmtTime(ts){if(!ts)return'';return new Date(ts*1000).toLocaleTimeString('zh-CN',{hour12:false})}
+function fmtDateTime(ts){if(!ts)return'';return new Date(ts*1000).toLocaleString('zh-CN',{hour12:false})}
+async function api(path,opts={}){const headers=opts.authMode==='apikey'?getApiHeaders():getHeaders();const{authMode,...rest}=opts;const r=await fetch(API+path,{headers,...rest});if(r.status===401){authed.value=false;localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token');throw new Error('未登录或会话已过期')}return r.json()}
+async function doLogin(){loginLoading.value=true;loginErr.value='';try{const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:loginPwd.value})});const d=await r.json().catch(()=>({}));if(!r.ok){loginErr.value=d.detail||d.error?.message||('登录失败 (HTTP '+r.status+')');return}if(d.token){authToken.value=d.token;localStorage.setItem('doubao_admin_token',d.token);setCookie('doubao_admin_token',d.token,1);if(d.api_key){apiKey.value=d.api_key;localStorage.setItem('doubao_api_key',d.api_key)}authed.value=true;loginPwd.value='';fetchOverview();fetchLogStats()}else{loginErr.value=d.detail||d.message||'登录失败'}}catch(e){loginErr.value='请求失败: '+e.message}finally{loginLoading.value=false}}
+async function doLogout(){try{await fetch(API+'/api/auth/logout',{method:'POST',headers:getHeaders()})}catch(e){}localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token');authToken.value='';apiKey.value='';localStorage.removeItem('doubao_api_key');authed.value=false;session.value=null;sysInfo.value=null;logs.value=[];logStats.value=null}
+async function checkAuth(){if(!authToken.value){authed.value=false;return}try{const r=await fetch(API+'/api/auth/status',{headers:getHeaders()});const d=await r.json();authed.value=!!d.logged_in;if(!authed.value){localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token')}}catch(e){authed.value=false}}
+async function fetchSession(){try{const d=await api('/admin/api/status');session.value={status:d.logged_in?'healthy':'not_logged_in',logged_in:d.logged_in,device_id:d.device_id,web_id:d.web_id,page_url:d.page_url,is_ready_flag:d.is_ready_flag,login_button_visible:d.login_button_visible}}catch(e){session.value={status:'error',logged_in:false}}}
+async function fetchHealth(){try{const d=await api('/health');health.value=d}catch(e){}}
+async function fetchSystem(){try{const d=await api('/admin/api/system');sysInfo.value=d;cdpUrl.value=d.cdp_url||''}catch(e){}}
+async function fetchLogStats(){try{logStats.value=await api('/admin/api/logs/stats')}catch(e){}}
+async function probeSession(){probe.loading=true;probe.result='';const t0=Date.now();
+try{const r=await api('/admin/api/probe',{method:'POST'});probe.result=r.status||'error';probe.ms=Date.now()-t0;
+probe.time=new Date().toLocaleTimeString('zh-CN',{hour12:false});session.value=r}
+catch(e){probe.result='error';probe.ms=Date.now()-t0;probe.time=new Date().toLocaleTimeString('zh-CN',{hour12:false})}
+finally{probe.loading=false}}
+async function fetchCookies(){try{const d=await api('/admin/api/cookies');cookieData.cookies=d.cookies||[];cookieData.total=d.total||0;cookieData.file=d.session_file||null}catch(e){}}
+async function fetchLogs(){try{logs.value=(await api('/admin/api/logs')).reverse()}catch(e){}}
+async function fetchKeys(){try{const d=await api('/api/keys');keys.list=d.keys||[]}catch(e){keys.list=[]}}
+async function createKey(){
+keys.loading=true;
+try{
+const body={name:keys.newName.trim()||'unnamed'};
+if(keys.newExpires&&keys.newExpires.trim()){const d=parseInt(keys.newExpires);if(d>0)body.expires_days=d}
+const r=await api('/api/keys',{method:'POST',body:JSON.stringify(body)});
+keys.newKey={key:r.key,name:r.name,id:r.id};
+keys.newName='';keys.newExpires='';keys.showCreate=false;
+fetchKeys()
+}catch(e){alert('创建失败: '+e.message)}
+finally{keys.loading=false}}
+async function deleteKey(id,name){
+if(!confirm('确认删除 Key "'+(name||id)+'" ?\n此操作不可恢复。'))return;
+try{await api('/api/keys/'+id,{method:'DELETE'});fetchKeys()}catch(e){alert('删除失败: '+e.message)}}
+async function toggleKey(id){
+try{await api('/api/keys/'+id+'/toggle',{method:'POST'});fetchKeys()}catch(e){alert('操作失败: '+e.message)}}
+function copyKey(text){
+if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>{alert('已复制到剪贴板')}).catch(()=>fallbackCopy(text))}
+else fallbackCopy(text)}
+function fallbackCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('已复制到剪贴板')}catch(e){alert('复制失败，请手动复制')}document.body.removeChild(ta)}
+async function resetCaptcha(){resetCap.loading=true;resetCap.msg='';try{const r=await fetch(API+'/auth/reset_captcha',{method:'POST',headers:getHeaders()});const d=await r.json().catch(()=>({}));resetCap.ok=r.ok;resetCap.msg=d.message||d.detail||('HTTP '+r.status);if(r.ok)fetchOverview()}catch(e){resetCap.ok=false;resetCap.msg=e.message}finally{resetCap.loading=false}}
+async function saveSession(){saveSes.loading=true;saveSes.msg='';try{const r=await fetch(API+'/auth/save_session',{method:'POST',headers:getHeaders()});const d=await r.json().catch(()=>({}));saveSes.ok=r.ok;saveSes.msg=d.message||d.detail||('HTTP '+r.status)}catch(e){saveSes.ok=false;saveSes.msg=e.message}finally{saveSes.loading=false}}
+async function fetchOverview(){fetchSession();fetchSystem();fetchCookies();fetchHealth();fetchLogStats()}
+let qrPoll=null;
+async function startQr(){qr.img='';qr.st='';qr.text='生成中...';
+try{const r=await api('/v1/session/qr-login',{method:'POST'});
+if(r.qr_image_base64){qr.img=r.qr_image_base64;qr.st='waiting_scan';qr.text='请用豆包 App 扫码';pollQr()}
+else{qr.text='生成失败: '+(r.detail||r.error||'unknown');qr.st='error'}}catch(e){qr.text='请求失败';qr.st='error'}}
+function pollQr(){if(qrPoll)clearInterval(qrPoll);
+qrPoll=setInterval(async()=>{try{const r=await api('/v1/session/qr-login');qr.st=r.status||'';
+if(r.status==='confirmed'||r.status==='success'){clearInterval(qrPoll);qrPoll=null;qrLoginSuccess()}
+else if(r.status==='scanned')qr.text='已扫码，请在手机确认';
+else if(r.status==='expired'){qr.text='二维码已过期';clearInterval(qrPoll)}
+else if(r.status==='failed'){qr.text='登录失败: '+(r.error||'');clearInterval(qrPoll)}}catch(e){clearInterval(qrPoll)}},2000)}
+function qrLoginSuccess(){qr.text='登录成功! 3秒后跳转到概览页...';
+setTimeout(()=>{qr.text='登录成功! 2秒后跳转...';
+setTimeout(()=>{qr.text='登录成功! 1秒后跳转...';
+setTimeout(()=>{activeTab.value=0;qr.img='';qr.st='';qr.text='';fetchOverview()},1000)},1000)},1000)}
+function loadVnc(){document.getElementById('vnc-container').innerHTML='<iframe src="'+NOVNC_URL+'" style="width:100%;height:480px;border:1px solid #334155;border-radius:8px;margin-top:8px" allowfullscreen allow="fullscreen"></iframe>'}
+async function takeScreenshot(){screenshot.loading=true;try{const r=await fetch(API+'/auth/screenshot',{headers:getHeaders()});if(!r.ok)throw new Error('HTTP '+r.status);const blob=await r.blob();screenshot.img=URL.createObjectURL(blob);screenshot.time=new Date().toLocaleTimeString('zh-CN',{hour12:false})}catch(e){screenshot.img='';alert('截图失败: '+e.message)}finally{screenshot.loading=false}}
+function scrollChat(){Vue.nextTick(()=>{const el=chatScroll.value;if(el)el.scrollTop=el.scrollHeight})}
+function clearChat(){chat.messages.splice(0);chat.error=''}
+function onChatKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderMd(text){
+if(!text)return'';
+let t=escapeHtml(text);
+t=t.replace(/```(\w*)\n?([\s\S]*?)```/g,(m,lang,code)=>'<pre><code>'+code.replace(/\n$/,'')+'</code></pre>');
+t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
+t=t.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>');
+t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>');
+t=t.replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
+const lines=t.split('\n');const out=[];let inUl=false,inOl=false;
+for(const ln of lines){
+const ul=ln.match(/^[-*] (.+)$/);
+const ol=ln.match(/^\d+\. (.+)$/);
+if(ul){if(!inUl){out.push('<ul>');inUl=true}out.push('<li>'+ul[1]+'</li>')}
+else if(ol){if(!inOl){out.push('<ol>');inOl=true}out.push('<li>'+ol[1]+'</li>')}
+else{if(inUl){out.push('</ul>');inUl=false}if(inOl){out.push('</ol>');inOl=false}out.push(ln)}}
+if(inUl)out.push('</ul>');if(inOl)out.push('</ol>');
+t=out.join('\n');
+t=t.replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br/>');
+t=t.replace(/<p>(<h[1-3]>)/g,'$1').replace(/(<\/h[1-3]>)<\/p>/g,'$1');
+t=t.replace(/<p>(<pre>)/g,'$1').replace(/(<\/pre>)<\/p>/g,'$1');
+t=t.replace(/<p>(<ul>)/g,'$1').replace(/(<\/ul>)<\/p>/g,'$1');
+t=t.replace(/<p>(<ol>)/g,'$1').replace(/(<\/ol>)<\/p>/g,'$1');
+t=t.replace(/<p>(<blockquote>)/g,'$1').replace(/(<\/blockquote>)<\/p>/g,'$1');
+return'<p>'+t+'</p>';
+}
+function mergeSearchResults(prev,sr){
+if(!sr)return;
+if(!prev){prev={summary:sr.summary||'搜索结果',queries:[...sr.queries||[]],results:[...sr.results||[]]};return prev}
+const newQ=(sr.queries||[]).filter(q=>!prev.queries.includes(q));prev.queries.push(...newQ);
+const exist=new Set(prev.results.map(r=>r.url));
+for(const r of(sr.results||[])){if(!exist.has(r.url)){prev.results.push(r);exist.add(r.url)}}
+prev.summary=`搜索 ${prev.queries.length} 个关键词，参考 ${prev.results.length} 篇资料`;
+return prev}
+async function sendChat(){
+const text=chat.input.trim();if(!text||chat.loading)return;
+chat.error='';chat.input='';
+chat.messages.push({role:'user',content:text});
+const aiMsg={role:'assistant',content:'',thinking:'',thinkOpen:false,searchResults:null,media:null,ms:0,streaming:false};
+chat.messages.push(aiMsg);scrollChat();
+const t0=Date.now();aiMsg.streaming=true;
+const history=chat.messages.filter(m=>m!==aiMsg).map(m=>({role:m.role,content:m.content}));
+try{
+if(chat.model.startsWith('doubao-image')){
+aiMsg.media={images:[],videos:[],audios:[]};
+const r=await api('/v1/images/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.imgModel||chat.model,ratio:chat.imgRatio||'1:1',style:chat.imgStyle||undefined}),authMode:'apikey'});
+const imgs=Array.isArray(r.data)?r.data.map(d=>d.url||d.b64_json):(r.image_url?[r.image_url]:[]);
+if(r.data&&r.data[0]&&r.data[0].b64_json)imgs=r.data.map(d=>d.b64_json.startsWith('data:')?d.b64_json:'data:image/png;base64,'+d.b64_json);
+aiMsg.media.images=imgs;aiMsg.content='已生成 '+imgs.length+' 张图片';
+}else if(chat.model==='doubao-video'){
+aiMsg.media={images:[],videos:[],audios:[]};
+const r=await api('/v1/video/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.videoModel||chat.model,ratio:chat.videoRatio||'16:9',duration:chat.videoDuration||'5'}),authMode:'apikey'});
+const vids=r.data?r.data.map(d=>d.url||d.video_url).filter(Boolean):(r.video_url?[r.video_url]:[]);
+aiMsg.media.videos=vids;aiMsg.content='已生成 '+vids.length+' 个视频';
+}else if(chat.model==='doubao-music'){
+aiMsg.media={images:[],videos:[],audios:[]};
+const r=await api('/v1/audio/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.model,genre:chat.musicGenre||''}),authMode:'apikey'});
+const auds=r.data?r.data.map(d=>d.url||d.audio_url).filter(Boolean):(r.audio_url?[r.audio_url]:[]);
+aiMsg.media.audios=auds;aiMsg.content='已生成 '+auds.length+' 个音频';
+}else if(chat.stream){
+const resp=await fetch(API+'/v1/chat/completions',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:chat.model,messages:history,stream:true})});
+if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||e.detail||('HTTP '+resp.status))}
+const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
+while(true){const{done,value}=await reader.read();if(done)break;
+buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+for(const line of lines){if(!line.startsWith('data: '))continue;const d=line.slice(6);
+if(d==='[DONE]')continue;try{const j=JSON.parse(d);const delta=j.choices?.[0]?.delta||{};
+if(delta.reasoning_content)aiMsg.thinking+=delta.reasoning_content;
+if(delta.search_results)aiMsg.searchResults=mergeSearchResults(aiMsg.searchResults,delta.search_results);
+if(delta.content){aiMsg.content+=delta.content;scrollChat()}}catch(e){}}}
+}else{
+const r=await (await fetch(API+'/v1/chat/completions',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:chat.model,messages:history,stream:false})})).json();
+const msg=r.choices?.[0]?.message||{};
+aiMsg.content=msg.content||JSON.stringify(r,null,2);
+if(msg.reasoning_content)aiMsg.thinking=msg.reasoning_content;
+if(r.search_results)aiMsg.searchResults=mergeSearchResults(null,r.search_results);
+}
+aiMsg.ms=Date.now()-t0;
+}catch(e){aiMsg.content+='[错误] '+e.message;chat.error=e.message}
+finally{aiMsg.streaming=false;scrollChat()}
+}
+setInterval(()=>{currentTime.value=new Date().toLocaleTimeString('zh-CN',{hour12:false})},1000);
+onMounted(async()=>{await checkAuth();if(authed.value){fetchOverview();fetchLogs();fetchKeys();currentTime.value=new Date().toLocaleTimeString('zh-CN',{hour12:false});
+setInterval(()=>{if(activeTab.value===0&&authed.value)fetchSession()},10000);
+setInterval(()=>{if(activeTab.value===0&&authed.value)fetchLogStats()},30000);
+setInterval(()=>{if(activeTab.value===3&&authed.value)fetchLogs()},5000);
+setInterval(()=>{if(activeTab.value===4&&authed.value)fetchKeys()},15000)}});
+return{tabs,icons,activeTab,authed,loginPwd,loginErr,loginLoading,showMobileMenu,session,sysInfo,health,cdpEnabled,cdpUrl,cookieData,probe,resetCap,saveSes,qr,qrColor,chat,chatModels,chatScroll,logs,logStats,allModels,imageStyles,currentTime,screenshot,keys,
+fmtDur,fmtTime,fmtDateTime,fetchOverview,probeSession,resetCaptcha,saveSession,fetchLogs,fetchLogStats,fetchKeys,createKey,deleteKey,toggleKey,copyKey,startQr,loadVnc,takeScreenshot,sendChat,clearChat,onChatKeydown,renderMd,doLogin,doLogout,chatPlaceholder,previewImage}}}).mount('#app');
+</script>
+</body>
+</html>

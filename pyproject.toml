@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "doubaowebapi"
+version = "1.0.0"
+description = "Reverse-engineered Doubao (豆包) API → OpenAI-compatible REST service. Free multimodal chat, image/video/music generation, and file hosting for AI agents."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+keywords = ["doubao", "openai", "api", "reverse-engineering"]
+authors = [{ name = "Royi", email = "mrz2333@users.noreply.github.com" }]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "pydantic>=2.0",
+    "aiohttp>=3.9.0",
+    "httpx>=0.27.0",
+    "patchright>=1.0.0",
+    "playwright>=1.52.0",
+    "playwright-stealth>=1.0.6",
+    "python-multipart>=0.0.9",
+    "tiktoken>=0.7.0",
+]
+
+[project.scripts]
+doubaowebapi = "doubaowebapi.__main__:main"
+
+[tool.hatch.version]
+path = "doubaowebapi/__init__.py"
+
+[project.urls]
+Homepage = "https://github.com/mrz2333/doubaowebapi"
+Repository = "https://github.com/mrz2333/doubaowebapi"
+Issues = "https://github.com/mrz2333/doubaowebapi/issues"

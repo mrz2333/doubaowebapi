@@ -1,0 +1,14 @@
+services:
+  doubaowebapi:
+    build: .
+    container_name: doubaowebapi
+    restart: always
+    network_mode: host
+    env_file:
+      - .env
+    environment:
+      - TZ=Asia/Shanghai
+      - DOUBAO_HOST=127.0.0.1
+      - DOUBAO_PORT=8458
+    volumes:
+      - ./data:/app/data

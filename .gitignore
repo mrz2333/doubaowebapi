@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+data/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.doubao_session.json
+.doubao_browser/
