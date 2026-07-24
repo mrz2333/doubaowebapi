@@ -703,24 +703,33 @@ curl -s http://localhost:8458/v1/images/generations \
 
 | 模型名 | deep_think | 说明 |
 |--------|-----------|------|
-| `doubao` | 0 | 快速模式，直接回答 |
-| `doubao-pro` | 0 | 快速模式别名 |
-| `doubao-think` | 1 | 思考模式，输出 `reasoning_content` 思维链 |
-| `doubao-expert` | 3 | 专家模式，深度推理。有每日配额，耗尽后自动降级为 think |
+| `doubao` | 0 | 默认模式，直接回答 |
+| `doubao-quick` | 0 | ⚡ 快速模式（与 doubao 等效，语义别名） |
+| `doubao-auto` | 2 | 🔄 自动模式，让模型自己决定是否深度思考 |
+| `doubao-pro` | 0 | Pro 模式别名 |
+| `doubao-think` | 1 | 🧠 思考模式，输出 `reasoning_content` 思维链 |
+| `doubao-expert` | 3 | 🧩 专家模式，深度推理。有每日配额，耗尽后自动降级为 think |
+| `doubao-write` | 0 | ✍️ 写作助手 |
+| `doubao-translate` | 0 | 🌐 翻译助手 |
+| `doubao-research` | 1 | 🔍 深入研究（使用思考模式） |
+| `doubao-ppt` | 0 | 📄 PPT 生成 |
+| `doubao-podcast` | 0 | 🎧 AI 播客 |
+| `doubao-sheet` | 0 | 📊 AI 表格 |
 
 ### 多媒体模型
 
-| 模型名 | 类型 | 说明 |
-|--------|------|------|
-| `doubao-image` | image | 图片生成，支持多种尺寸和风格 |
-| `doubao-video` | video | 视频生成，支持时长和比例 |
-| `doubao-music` | audio | 音乐生成，支持风格和歌词 |
+| 模型名 | 类型 | 端点 | 说明 |
+|--------|------|------|------|
+| `doubao-image` | image | `/v1/images/generations` | 图片生成，支持多种尺寸和风格 |
+| `doubao-video` | video | `/v1/video/generations` | 视频生成，支持时长和比例 |
+| `doubao-music` | audio | `/v1/audio/generations` | 音乐生成，支持风格和歌词 |
 
 ### 底层路由
 
 | 模式 | 参数 | 底层模型 |
 |------|------|----------|
 | 快速 | `deep_think=0` | Doubao-Pro（豆包 Pro） |
+| 自动 | `deep_think=2` | 模型自动选择是否深度思考 |
 | 思考 | `deep_think=1` | Doubao-Thinking（带思维链） |
 | 专家 | `deep_think=3` | Doubao-Expert（深度推理，配额制） |
 
