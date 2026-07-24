@@ -550,7 +550,7 @@ class BrowserClient:
                     result.device_id = samWeb.web_id || '';
                 } catch(e) {}
                 try {
-                    const tea = JSON.parse(localStorage.getItem('__tea_cache_tokens_6383') || '{}');
+                    const tea = JSON.parse(localStorage.getItem('__tea_cache_tokens_497858') || '{}');
                     result.web_id = tea.web_id || '';
                 } catch(e) {}
                 const fpCookie = document.cookie.split(';')
@@ -769,8 +769,8 @@ class BrowserClient:
                 const result = {};
                 const keys = [
                     'samantha_web_web_id',
-                    '__tea_cache_tokens_6383',
-                    '__tea_cache_tokens_6383'
+                    '__tea_cache_tokens_497858',
+                    '__tea_cache_tokens_497858'
                 ];
                 for (const k of keys) {
                     const v = localStorage.getItem(k);
@@ -850,14 +850,16 @@ class BrowserClient:
     def _build_query_params(self) -> Dict[str, str]:
         """Build the standard query parameters for API calls."""
         params = {
-            "aid": "6383",
+            "aid": "497858",
             "device_id": self._device_id or "",
-            "device_platform": "webapp",
+            "device_platform": "web",
+            "doubao_device_platform": "web",
+            "doubao_pc_version": "3.28.7",
             "fp": self._fp or "",
             "language": "zh",
-            "pc_version": "3.19.4",
+            "pc_version": "3.28.7",
             "pkg_type": "release_version",
-            "real_aid": "6383",
+            "real_aid": "497858",
             "region": "",
             "samantha_web": "1",
             "sys_region": "",
@@ -1169,6 +1171,7 @@ class BrowserClient:
                 const csrfToken = csrf ? csrf[1] : '';
                 const headers = {{
                     'Content-Type': 'application/json',
+                    'Agw-Js-Conv': 'str, str',
                 }};
                 const res = await fetch(url, {{
                     method: 'POST',
@@ -1345,6 +1348,7 @@ class BrowserClient:
             const csrfToken = csrf ? csrf[1] : '';
             const headers = {
                 'Content-Type': 'application/json',
+                'Agw-Js-Conv': 'str, str',
             };
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -2531,6 +2535,7 @@ class BrowserClient:
             const csrfToken = csrf ? csrf[1] : '';
             const headers = {
                 'Content-Type': 'application/json',
+                'Agw-Js-Conv': 'str, str',
             };
             const res = await fetch(url, {
                 method: 'POST',
