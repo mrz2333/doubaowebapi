@@ -537,13 +537,49 @@ def create_app(
         if client.needs_captcha:
             log.info("Auto-recovery: attempting page reload to clear captcha flag")
             try:
-                await client._page.reload(wait_until="load", timeout=30000)
-                await asyncio.sleep(3)
+                # Check if current page is still on doubao.com
+                current_url = client._page.url if client._page else ""
+                if "doubao.com" not in current_url:
+                    # Find a doubao page or navigate to it
+                    found_page = False
+                    if client._context:
+                        for p in client._context.pages:
+                            if "doubao.com" in p.url:
+                                client._page = p
+                                found_page = True
+                                log.info(
+                                    "Auto-recovery: switched to doubao page: %s",
+                                    p.url[:80],
+                                )
+                                break
+                    if not found_page:
+                        log.info(
+                            "Auto-recovery: no doubao page found, navigating to https://www.doubao.com/chat/"
+                        )
+                        await client._page.goto(
+                            "https://www.doubao.com/chat/",
+                            wait_until="load",
+                            timeout=30000,
+                        )
+                        await asyncio.sleep(3)
+                    else:
+                        # Reload the doubao page to re-inject fetch hook
+                        log.info(
+                            "Auto-recovery: reloading doubao page to re-inject fetch hook"
+                        )
+                        await client._page.reload(wait_until="load", timeout=30000)
+                        await asyncio.sleep(3)
+                else:
+                    await client._page.reload(wait_until="load", timeout=30000)
+                    await asyncio.sleep(3)
                 await client._apply_anti_detection_patches()
                 await client._check_login_state()
-                # Re-check fetch hook
+                # Re-verify fetch hook
+                await client._verify_fetch_hook()
+                # Re-check fetch hook (must use isolated_context=False to see page's hook)
                 hooked = await client._page.evaluate(
-                    "() => { try { const s = window.fetch.toString(); return !s.includes('native code'); } catch(e) { return false; } }"
+                    "() => { try { const s = window.fetch.toString(); return !s.includes('native code'); } catch(e) { return false; } }",
+                    isolated_context=False,
                 )
                 if hooked:
                     log.info(
@@ -2233,10 +2269,44 @@ def create_app(
                 sign_ok,
             )
             try:
-                await client._page.reload(wait_until="load", timeout=60000)
-                await asyncio.sleep(5)
+                # Check if current page is still on doubao.com
+                current_url = client._page.url if client._page else ""
+                if "doubao.com" not in current_url:
+                    # Find a doubao page or navigate to it
+                    found_page = False
+                    if client._context:
+                        for p in client._context.pages:
+                            if "doubao.com" in p.url:
+                                client._page = p
+                                found_page = True
+                                log.info(
+                                    "reset_captcha: switched to doubao page: %s",
+                                    p.url[:80],
+                                )
+                                break
+                    if not found_page:
+                        log.info(
+                            "reset_captcha: navigating to https://www.doubao.com/chat/"
+                        )
+                        await client._page.goto(
+                            "https://www.doubao.com/chat/",
+                            wait_until="load",
+                            timeout=60000,
+                        )
+                        await asyncio.sleep(5)
+                    else:
+                        # Reload the doubao page to re-inject fetch hook
+                        log.info(
+                            "reset_captcha: reloading doubao page to re-inject fetch hook"
+                        )
+                        await client._page.reload(wait_until="load", timeout=60000)
+                        await asyncio.sleep(5)
+                else:
+                    await client._page.reload(wait_until="load", timeout=60000)
+                    await asyncio.sleep(5)
                 await client._apply_anti_detection_patches()
                 await client._check_login_state()
+                await client._verify_fetch_hook()
                 # Re-check after reload
                 try:
                     hook_ok = await client._page.evaluate(

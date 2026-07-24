@@ -1172,6 +1172,13 @@ class BrowserClient:
         js_code = f"""
         async ([url, payloadJson, requestId]) => {{
             try {{
+                // Ensure msToken is in URL (read from cookies if missing)
+                if (!url.includes('msToken=')) {{
+                    const msMatch = document.cookie.match(/(?:^|;\\s*)msToken=([^;]+)/);
+                    if (msMatch) {{
+                        url += '&msToken=' + msMatch[1];
+                    }}
+                }}
                 const csrf = document.cookie.match(/passport_csrf_token=([^;]+)/);
                 const csrfToken = csrf ? csrf[1] : '';
                 const headers = {{
@@ -1349,6 +1356,13 @@ class BrowserClient:
 
         js_code = """
         async ([url, payloadJson, timeoutMs]) => {
+            // Ensure msToken is in URL (read from cookies if missing)
+            if (!url.includes('msToken=')) {
+                const msMatch = document.cookie.match(/(?:^|;\s*)msToken=([^;]+)/);
+                if (msMatch) {
+                    url += '&msToken=' + msMatch[1];
+                }
+            }
             const csrf = document.cookie.match(/passport_csrf_token=([^;]+)/);
             const csrfToken = csrf ? csrf[1] : '';
             const headers = {
@@ -2549,6 +2563,13 @@ class BrowserClient:
         # Use browser fetch (non-streaming, collect full response)
         js_code = """
         async ([url, payloadJson]) => {
+            // Ensure msToken is in URL (read from cookies if missing)
+            if (!url.includes('msToken=')) {
+                const msMatch = document.cookie.match(/(?:^|;\s*)msToken=([^;]+)/);
+                if (msMatch) {
+                    url += '&msToken=' + msMatch[1];
+                }
+            }
             const csrf = document.cookie.match(/passport_csrf_token=([^;]+)/);
             const csrfToken = csrf ? csrf[1] : '';
             const headers = {
