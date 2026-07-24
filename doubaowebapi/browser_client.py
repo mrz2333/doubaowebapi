@@ -1067,17 +1067,10 @@ class BrowserClient:
             },
         }
 
-        # Build URL with query params, then sign with frontierSign for a_bogus
+        # Build URL with query params (fetch hook will add a_bogus/msToken)
         query_params = self._build_query_params()
-        try:
-            signed_url = await self._sign_url("/chat/completion", query_params)
-            url = signed_url.replace("https://www.doubao.com", "")
-        except Exception as e:
-            log.warning(
-                "frontierSign failed for chat, falling back to unsigned URL: %s", e
-            )
-            query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
-            url = f"/chat/completion?{query_string}"
+        query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
+        url = f"/chat/completion?{query_string}"
 
         # Request jitter: random delay (120-360ms) to mimic human behavior
         # (borrowed from robinxplorer/doubao2API)
@@ -2534,14 +2527,10 @@ class BrowserClient:
             },
         }
 
+        # Build URL with query params (fetch hook will add a_bogus/msToken)
         query_params = self._build_query_params()
-        try:
-            signed_url = await self._sign_url("/chat/completion", query_params)
-            url = signed_url.replace("https://www.doubao.com", "")
-        except Exception as e:
-            log.warning("frontierSign failed for chat_with_file, falling back: %s", e)
-            query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
-            url = f"/chat/completion?{query_string}"
+        query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
+        url = f"/chat/completion?{query_string}"
 
         # Use browser fetch (non-streaming, collect full response)
         js_code = """
