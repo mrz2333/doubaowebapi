@@ -1,10 +1,10 @@
-<!-- Doubao Console v1.2.0 - Admin Panel -->
+<!-- Doubao Console v1.3.0 - Admin Panel -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>Doubao Console v1.2.0</title>
+<title>Doubao Console v1.3.0</title>
 <link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
@@ -192,7 +192,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
       <img src="/static/img/logo.png" alt="Doubao" class="w-11 h-11 rounded-xl" onerror="this.style.display='none'">
       <div>
         <div class="font-bold text-lg" style="color:var(--text-primary)">Doubao Console</div>
-        <div class="text-xs" style="color:var(--text-muted)">doubaowebapi 管理后台 <span class="font-mono" style="opacity:.6">v1.2.0</span></div>
+        <div class="text-xs" style="color:var(--text-muted)">doubaowebapi 管理后台 <span class="font-mono" style="opacity:.6">v1.3.0</span></div>
       </div>
     </div>
     <div v-if="loginErr" class="mb-3 p-2.5 rounded-lg text-sm" style="background:var(--error-bg);color:var(--error);border:1px solid var(--error)">{{loginErr}}</div>
@@ -230,7 +230,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
   </nav>
   <div class="p-4 border-t space-y-3" style="border-color:var(--border)">
     <div class="text-center">
-      <span class="font-mono text-[10px]" style="color:var(--text-muted)">v1.2.0</span>
+      <span class="font-mono text-[10px]" style="color:var(--text-muted)">v1.3.0</span>
     </div>
     <div class="flex items-center gap-2 text-xs" style="color:var(--text-muted)">
       <span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'pulse':'']" :style="{background:session&&session.logged_in?'var(--success)':'var(--error)'}"></span>
@@ -585,7 +585,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
   <div class="flex items-center gap-1 md:gap-2">
     <label class="text-xs hidden md:inline" style="color:var(--text-muted)">模型</label>
     <select v-model="chat.model" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-28 md:!w-36">
-      <option v-for="m in chatModels" :key="m" :value="m">{{m}}</option>
+      <option v-for="m in chatModels" :key="m" :value="m">{{modelNames[m]||m}}</option>
     </select>
   </div>
   <div class="flex items-center gap-1 md:gap-2" v-if="!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video'">
@@ -950,7 +950,7 @@ const cdpUrl=ref('');
 const cdpEnabled=computed(()=>!!cdpUrl.value);
 const screenshot=reactive({img:"",loading:false,time:""});
 const chat=reactive({model:'doubao-think',stream:true,input:'',loading:false,error:'',messages:[],conversationId:null,attachments:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5',musicGenre:''});
-const chatModels=computed(()=>{const base=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music',];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
+const chatModels=computed(()=>{const base=['doubao','doubao-quick','doubao-think','doubao-expert','doubao-pro','doubao-write','doubao-translate','doubao-image','doubao-video','doubao-music','doubao-research','doubao-ppt','doubao-podcast','doubao-sheet',];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
 const canAttach=computed(()=>!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video'&&chat.model!=='doubao-music');
 const chatScroll=ref(null);
 const previewImage=ref(null);
@@ -960,7 +960,8 @@ const logStats=ref(null);
 const logRealtime=ref(true);
 const keys=reactive({list:[],loading:false,showCreate:false,newName:'',newExpires:'',newKey:null});
 const currentTime=ref('');
-const allModels=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music',];
+const allModels=['doubao','doubao-quick','doubao-think','doubao-expert','doubao-pro','doubao-write','doubao-translate','doubao-image','doubao-video','doubao-music','doubao-research','doubao-ppt','doubao-podcast','doubao-sheet',];
+const modelNames={'doubao':'💬 对话','doubao-quick':'⚡ 快速','doubao-think':'🧠 深度思考','doubao-expert':'🧩 专家','doubao-pro':'⭐ Pro','doubao-write':'✍️ 写作','doubao-translate':'🌐 翻译','doubao-image':'🖼️ 图片生成','doubao-video':'▶️ 视频生成','doubao-music':'🎵 音乐生成','doubao-research':'🔍 深入研究','doubao-ppt':'📄 PPT生成','doubao-podcast':'🎧 AI播客','doubao-sheet':'📊 AI表格'};
 const musicGenres=['流行','摇滚','民谣','电子','古典','爵士','R&B','嘻哈','国风','轻音乐'];
 const imageStyles=['人像摄影','电影写真','中国风','动漫','3D渲染','赛博朋克','CG动画','水墨画','油画','古典','水彩画','卡通','平面插画','风景','港风动漫','像素风格','荧光绘画','彩铅画','手办','儿童绘画','抽象','锐笔插画','二次元','油墨印刷','版画','莫奈','毕加索','伦勃朗','马蒂斯','巴洛克','复古动漫','绘本'];
 

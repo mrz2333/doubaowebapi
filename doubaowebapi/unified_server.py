@@ -63,6 +63,11 @@ ALL_MODELS = [
     {"id": "doubao-image", "object": "model", "owned_by": "doubao", "created": 0},
     {"id": "doubao-video", "object": "model", "owned_by": "doubao", "created": 0},
     {"id": "doubao-music", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "doubao-quick", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "doubao-research", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "doubao-ppt", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "doubao-podcast", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "doubao-sheet", "object": "model", "owned_by": "doubao", "created": 0},
 ]
 
 
@@ -2059,6 +2064,11 @@ def create_app(
                     "image": ["doubao-image"],
                     "video": ["doubao-video"],
                     "music": ["doubao-music"],
+                    "quick": ["doubao-quick"],
+                    "research": ["doubao-research"],
+                    "ppt": ["doubao-ppt"],
+                    "podcast": ["doubao-podcast"],
+                    "sheet": ["doubao-sheet"],
                 },
             }
         )
