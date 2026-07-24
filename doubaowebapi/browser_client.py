@@ -827,14 +827,14 @@ class BrowserClient:
                     isolated_context=False,
                 )
 
-                x_bogus = ""
+                a_bogus = ""
                 if isinstance(sig, dict):
-                    x_bogus = sig.get("X-Bogus") or sig.get("a_bogus", "")
+                    a_bogus = sig.get("a_bogus") or sig.get("X-Bogus", "")
                 elif isinstance(sig, str):
-                    x_bogus = sig
+                    a_bogus = sig
 
-                if x_bogus:
-                    return f"{base_url}?{query_string}&X-Bogus={x_bogus}"
+                if a_bogus:
+                    return f"{base_url}?{query_string}&a_bogus={a_bogus}"
 
                 last_error = f"empty signature: {sig}"
             except Exception as e:
@@ -845,7 +845,7 @@ class BrowserClient:
                 await asyncio.sleep(1)
 
         log.error("frontierSign failed after 3 attempts: %s", last_error)
-        raise RuntimeError(f"Failed to generate X-Bogus signature: {last_error}")
+        raise RuntimeError(f"Failed to generate a_bogus signature: {last_error}")
 
     def _build_query_params(self) -> Dict[str, str]:
         """Build the standard query parameters for API calls."""
