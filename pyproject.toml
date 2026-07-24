@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "doubaowebapi"
-version = "2.0.4"
+version = "2.0.5"
 description = "Reverse-engineered Doubao (豆包) API → OpenAI-compatible REST service. Free multimodal chat, image/video/music generation, and file hosting for AI agents."
 readme = "README.md"
 license = "Apache-2.0"

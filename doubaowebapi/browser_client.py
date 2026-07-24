@@ -1169,11 +1169,7 @@ class BrowserClient:
                 const csrfToken = csrf ? csrf[1] : '';
                 const headers = {{
                     'Content-Type': 'application/json',
-                    'agw-js-conv': 'str, str',
                 }};
-                if (csrfToken) {{
-                    headers['x-tt-passport-csrf-token'] = csrfToken;
-                }}
                 const res = await fetch(url, {{
                     method: 'POST',
                     headers: headers,
@@ -1349,11 +1345,7 @@ class BrowserClient:
             const csrfToken = csrf ? csrf[1] : '';
             const headers = {
                 'Content-Type': 'application/json',
-                'agw-js-conv': 'str, str',
             };
-            if (csrfToken) {
-                headers['x-tt-passport-csrf-token'] = csrfToken;
-            }
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), timeoutMs);
             try {
@@ -2539,9 +2531,7 @@ class BrowserClient:
             const csrfToken = csrf ? csrf[1] : '';
             const headers = {
                 'Content-Type': 'application/json',
-                'agw-js-conv': 'str, str',
             };
-            if (csrfToken) headers['x-tt-passport-csrf-token'] = csrfToken;
             const res = await fetch(url, {
                 method: 'POST',
                 headers: headers,
