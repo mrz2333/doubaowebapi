@@ -1236,9 +1236,7 @@ class BrowserClient:
         }}
         """
         payload_json = json.dumps(payload, ensure_ascii=False)
-        await self._page.evaluate(
-            js_code, [url, payload_json, request_id], isolated_context=False
-        )
+        await self._page.evaluate(js_code, [url, payload_json, request_id])
 
     # ------------------------------------------------------------------
     # High-level chat helper
@@ -1381,9 +1379,7 @@ class BrowserClient:
         timeout_ms = int(timeout * 1000)
 
         log.info("POST %s [browser fetch, timeout=%ds]", url.split("?")[0], timeout)
-        result = await self._page.evaluate(
-            js_code, [url, payload_json, timeout_ms], isolated_context=False
-        )
+        result = await self._page.evaluate(js_code, [url, payload_json, timeout_ms])
 
         if result.get("error"):
             status = result.get("status", 0)
@@ -2558,9 +2554,7 @@ class BrowserClient:
         """
         payload_json = json.dumps(payload, ensure_ascii=False)
         log.info("POST /chat/completion [chat_with_file, browser fetch]")
-        result = await self._page.evaluate(
-            js_code, [url, payload_json], isolated_context=False
-        )
+        result = await self._page.evaluate(js_code, [url, payload_json])
 
         if result.get("error"):
             raise RuntimeError(
