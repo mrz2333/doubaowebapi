@@ -25,9 +25,7 @@ Usage:
 import argparse
 import json
 import time
-import re
 import httpx
-import sys
 from datetime import datetime
 from typing import Optional
 
@@ -205,7 +203,7 @@ def classify_result(response: dict, expect_tool: Optional[str]) -> dict:
     message = choice["message"]
     content = message.get("content") or ""
     tool_calls = message.get("tool_calls")
-    finish_reason = choice.get("finish_reason", "")
+    choice.get("finish_reason", "")
 
     # Check for search hijack (search_results in non-streaming response isn't visible,
     # but if model answers directly when tool was expected, it's likely hijacked)
@@ -255,7 +253,7 @@ def run_reliability_test(base_url: str, max_rounds: int = 50, delay: int = DELAY
 
     messages = []  # Full conversation history
     results = []
-    tool_valid_names = {t["function"]["name"] for t in TOOLS}
+    {t["function"]["name"] for t in TOOLS}
 
     for i, scenario in enumerate(SCENARIOS[:max_rounds], 1):
         user_msg = scenario["user"]
@@ -359,7 +357,7 @@ def run_reliability_test(base_url: str, max_rounds: int = 50, delay: int = DELAY
 
     # Failure mode breakdown
     if fail > 0 or partial > 0:
-        print(f"\n  Failure modes:")
+        print("\n  Failure modes:")
         modes = {}
         for r in results:
             if r["status"] != "ok":
@@ -371,7 +369,7 @@ def run_reliability_test(base_url: str, max_rounds: int = 50, delay: int = DELAY
     # Latency stats
     latencies = [r["elapsed"] for r in results if "elapsed" in r]
     if latencies:
-        print(f"\n  Latency (seconds):")
+        print("\n  Latency (seconds):")
         print(f"    Min:  {min(latencies):.1f}")
         print(f"    Max:  {max(latencies):.1f}")
         print(f"    Avg:  {sum(latencies)/len(latencies):.1f}")
@@ -380,7 +378,7 @@ def run_reliability_test(base_url: str, max_rounds: int = 50, delay: int = DELAY
     # Context growth
     ctx_sizes = [r["ctx_size"] for r in results if "ctx_size" in r]
     if ctx_sizes:
-        print(f"\n  Context growth:")
+        print("\n  Context growth:")
         print(f"    Start: {ctx_sizes[0]:,} chars")
         print(f"    End:   {ctx_sizes[-1]:,} chars")
         print(f"    Growth: {(ctx_sizes[-1]-ctx_sizes[0]):,} chars over {len(ctx_sizes)} rounds")

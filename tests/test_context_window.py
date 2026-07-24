@@ -13,7 +13,6 @@ import argparse
 import json
 import time
 import httpx
-import sys
 
 BASE_URL = "http://localhost:9090"
 
@@ -347,7 +346,7 @@ def test_multi_turn_growth(base_url: str):
                 results.append({"turn": turn, "payload_size": payload_size, "status": f"http_{resp.status_code}", "error": error_text})
                 break  # Stop on error
         except httpx.TimeoutException:
-            print(f"  TIMEOUT")
+            print("  TIMEOUT")
             results.append({"turn": turn, "payload_size": payload_size, "status": "timeout"})
             break
         except Exception as e:
