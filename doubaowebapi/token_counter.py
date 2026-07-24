@@ -1,7 +1,7 @@
 """
 Token counting utilities for doubaowebapi.
 
-Uses tiktoken cl100k_base as an approximation for Dola's tokenizer.
+Uses tiktoken cl100k_base as an approximation for Doubao's tokenizer.
 Applies a 1.3x safety factor since Dola uses a different tokenizer
 (likely overestimates by 10-30%, which is safer for context management).
 """

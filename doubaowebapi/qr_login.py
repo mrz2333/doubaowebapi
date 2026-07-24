@@ -1,7 +1,7 @@
 """
-QR code login for Dola.
+QR code login for Doubao.
 
-QR code login for Dola. Runs the full QR login flow
+QR code login for Doubao. Runs the full QR login flow
 in a background thread and notifies callers via callbacks.
 
 Flow:

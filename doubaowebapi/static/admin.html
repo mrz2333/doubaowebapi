@@ -1,15 +1,15 @@
-<!-- Doubao Console v1.4.8 - Admin Panel -->
+<!-- Doubao Console v1.1.1 - Admin Panel -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>Doubao Console v1.4.8</title>
+<title>Doubao Console v1.1.1</title>
 <link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
 <meta name="theme-color" content="#0c0e14">
-<meta name="apple-mobile-web-app-title" content="Dola">
+<meta name="apple-mobile-web-app-title" content="Doubao">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -189,10 +189,10 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
 <div v-if="!authed" class="min-h-screen flex items-center justify-center px-4" style="background:var(--bg-base)">
   <div class="card w-full max-w-sm">
     <div class="flex items-center gap-3 mb-6">
-      <img src="/static/img/logo.png" alt="Dola" class="w-11 h-11 rounded-xl" onerror="this.style.display='none'">
+      <img src="/static/img/logo.png" alt="Doubao" class="w-11 h-11 rounded-xl" onerror="this.style.display='none'">
       <div>
         <div class="font-bold text-lg" style="color:var(--text-primary)">Doubao Console</div>
-        <div class="text-xs" style="color:var(--text-muted)">doubaowebapi 管理后台 <span class="font-mono" style="opacity:.6">v1.4.8</span></div>
+        <div class="text-xs" style="color:var(--text-muted)">doubaowebapi 管理后台 <span class="font-mono" style="opacity:.6">v1.1.1</span></div>
       </div>
     </div>
     <div v-if="loginErr" class="mb-3 p-2.5 rounded-lg text-sm" style="background:var(--error-bg);color:var(--error);border:1px solid var(--error)">{{loginErr}}</div>
@@ -217,7 +217,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
 <aside class="desktop-only w-56 flex-col shrink-0 hidden border-r" style="background:var(--bg-card);border-color:var(--border)">
   <div class="p-5 border-b" style="border-color:var(--border)">
     <div class="flex items-center gap-2.5">
-      <img src="/static/img/logo.png" alt="Dola" class="w-8 h-8 rounded-lg" onerror="this.style.display='none'">
+      <img src="/static/img/logo.png" alt="Doubao" class="w-8 h-8 rounded-lg" onerror="this.style.display='none'">
       <span class="font-bold text-sm" style="color:var(--text-primary)">Doubao Console</span>
     </div>
   </div>
@@ -230,7 +230,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
   </nav>
   <div class="p-4 border-t space-y-3" style="border-color:var(--border)">
     <div class="text-center">
-      <span class="font-mono text-[10px]" style="color:var(--text-muted)">v1.4.8</span>
+      <span class="font-mono text-[10px]" style="color:var(--text-muted)">v1.1.1</span>
     </div>
     <div class="flex items-center gap-2 text-xs" style="color:var(--text-muted)">
       <span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'pulse':'']" :style="{background:session&&session.logged_in?'var(--success)':'var(--error)'}"></span>
@@ -542,9 +542,9 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
 <div class="card max-w-md mx-auto text-center">
   <div v-if="!qr.img" class="py-6 md:py-8">
     <div class="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden">
-      <img src="/static/img/logo.png" alt="Dola" class="w-16 h-16 object-cover" onerror="this.style.display='none'">
+      <img src="/static/img/logo.png" alt="Doubao" class="w-16 h-16 object-cover" onerror="this.style.display='none'">
     </div>
-    <p class="mb-4 text-sm" style="color:var(--text-secondary)">使用 Dola App 扫码登录</p>
+    <p class="mb-4 text-sm" style="color:var(--text-secondary)">使用 Doubao App 扫码登录</p>
     <button @click="startQr" class="btn">生成二维码</button>
   </div>
   <div v-else class="py-4">
@@ -588,13 +588,13 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
       <option v-for="m in chatModels" :key="m" :value="m">{{m}}</option>
     </select>
   </div>
-  <div class="flex items-center gap-1 md:gap-2" v-if="!chat.model.startsWith('dola-image')&&chat.model!=='dola-video'">
+  <div class="flex items-center gap-1 md:gap-2" v-if="!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video'">
     <select v-model="chat.stream" class="!py-1.5 !px-1.5 md:!px-2 text-sm">
       <option :value="true">流式</option><option :value="false">非流式</option>
     </select>
   </div>
   <!-- Image options -->
-  <template v-if="chat.model.startsWith('dola-image')">
+  <template v-if="chat.model.startsWith('doubao-image')">
     <select v-model="chat.imgModel" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-32">
       <option value="seedream-5.0-pro">5.0 Pro</option><option value="seedream-5.0-lite">5.0 Lite</option>
       <option value="seedream-4.5">4.5</option><option value="seedream-4.0">4.0</option>
@@ -608,7 +608,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
     </select>
   </template>
   <!-- Video options -->
-  <template v-if="chat.model==='dola-video'">
+  <template v-if="chat.model==='doubao-video'">
     <select v-model="chat.videoRatio" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-28">
       <option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option>
     </select>
@@ -623,10 +623,10 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
 <!-- Messages -->
 <div ref="chatScroll" class="flex-1 overflow-y-auto px-3 md:px-4 py-3 md:py-4 space-y-3 md:space-y-4" style="min-height:0;-webkit-overflow-scrolling:touch">
   <div v-if="!chat.messages.length" class="flex flex-col items-center justify-center h-full gap-3" style="color:var(--text-muted)">
-    <img src="/static/img/logo.png" alt="Dola" class="w-10 h-10 md:w-12 md:h-12 opacity-30 rounded-xl" onerror="this.style.display='none'">
+    <img src="/static/img/logo.png" alt="Doubao" class="w-10 h-10 md:w-12 md:h-12 opacity-30 rounded-xl" onerror="this.style.display='none'">
     <span class="text-xs md:text-sm">
-      <span v-if="chat.model.startsWith('dola-image')">描述要生成的图片</span>
-      <span v-else-if="chat.model==='dola-video'">描述要生成的视频</span>
+      <span v-if="chat.model.startsWith('doubao-image')">描述要生成的图片</span>
+      <span v-else-if="chat.model==='doubao-video'">描述要生成的视频</span>
       
       <span v-else>开始对话</span>
     </span>
@@ -732,7 +732,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
       <span v-if="chat.loading" class="flex items-center gap-1">
         <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
       </span>
-      <span v-else>{{chat.model.startsWith('dola-image')?'生图':chat.model==='dola-video'?'生视频':'发送'}}</span>
+      <span v-else>{{chat.model.startsWith('doubao-image')?'生图':chat.model==='doubao-video'?'生视频':'发送'}}</span>
     </button>
   </div>
 </div>
@@ -886,13 +886,13 @@ const API=window.location.origin;
 /* ── Theme ── */
 const isDark=ref(true);
 function initTheme(){
-  const saved=localStorage.getItem('dola_theme');
+  const saved=localStorage.getItem('doubao_theme');
   if(saved){isDark.value=saved==='dark'}
   else{isDark.value=window.matchMedia('(prefers-color-scheme:dark)').matches}
   applyTheme();
 }
 function applyTheme(){document.documentElement.setAttribute('data-theme',isDark.value?'dark':'light')}
-function toggleTheme(){isDark.value=!isDark.value;localStorage.setItem('dola_theme',isDark.value?'dark':'light');applyTheme()}
+function toggleTheme(){isDark.value=!isDark.value;localStorage.setItem('doubao_theme',isDark.value?'dark':'light');applyTheme()}
 
 /* ── Toast ── */
 const toasts=ref([]);
@@ -909,8 +909,8 @@ const authed=ref(false);
 const loginPwd=ref('');
 const loginErr=ref('');
 const loginLoading=ref(false);
-const authToken=ref(localStorage.getItem('dola_admin_token')||'');
-const apiKey=ref(localStorage.getItem('dola_api_key')||'');
+const authToken=ref(localStorage.getItem('doubao_admin_token')||'');
+const apiKey=ref(localStorage.getItem('doubao_api_key')||'');
 const showMobileMenu=ref(false);
 
 function getApiHeaders(){return{'Authorization':'Bearer '+(apiKey.value||authToken.value||''),'Content-Type':'application/json'}}
@@ -941,18 +941,18 @@ const health=ref(null);
 const cdpUrl=ref('');
 const cdpEnabled=computed(()=>!!cdpUrl.value);
 const screenshot=reactive({img:"",loading:false,time:""});
-const chat=reactive({model:'dola-think',stream:true,input:'',loading:false,error:'',messages:[],conversationId:null,attachments:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5'});
-const chatModels=computed(()=>{const base=['dola','dola-think','dola-expert','dola-pro','dola-image','dola-video',];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
-const canAttach=computed(()=>!chat.model.startsWith('dola-image')&&chat.model!=='dola-video');
+const chat=reactive({model:'doubao-think',stream:true,input:'',loading:false,error:'',messages:[],conversationId:null,attachments:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5'});
+const chatModels=computed(()=>{const base=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video',];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
+const canAttach=computed(()=>!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video');
 const chatScroll=ref(null);
 const previewImage=ref(null);
-const chatPlaceholder=computed(()=>chat.model.startsWith('dola-image')?'描述要生成的图片...':chat.model==='dola-video'?'描述要生成的视频...':'输入消息...');
+const chatPlaceholder=computed(()=>chat.model.startsWith('doubao-image')?'描述要生成的图片...':chat.model==='doubao-video'?'描述要生成的视频...':'输入消息...');
 const logs=ref([]);
 const logStats=ref(null);
 const logRealtime=ref(true);
 const keys=reactive({list:[],loading:false,showCreate:false,newName:'',newExpires:'',newKey:null});
 const currentTime=ref('');
-const allModels=['dola','dola-quick','dola-think','dola-auto','dola-expert','dola-pro','dola-image','dola-video',];
+const allModels=['doubao','dola-quick','doubao-think','dola-auto','doubao-expert','doubao-pro','doubao-image','doubao-video',];
 const imageStyles=['人像摄影','电影写真','中国风','动漫','3D渲染','赛博朋克','CG动画','水墨画','油画','古典','水彩画','卡通','平面插画','风景','港风动漫','像素风格','荧光绘画','彩铅画','手办','儿童绘画','抽象','锐笔插画','二次元','油墨印刷','版画','莫奈','毕加索','伦勃朗','马蒂斯','巴洛克','复古动漫','绘本'];
 
 /* ── Collapsible state ── */
@@ -985,7 +985,7 @@ async function api(path,opts={}){
   const headers=opts.authMode==='apikey'?getApiHeaders():getHeaders();
   const{authMode,...rest}=opts;
   const r=await fetch(API+path,{headers,...rest});
-  if(r.status===401){authed.value=false;localStorage.removeItem('dola_admin_token');delCookie('dola_admin_token');throw new Error('未登录或会话已过期')}
+  if(r.status===401){authed.value=false;localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token');throw new Error('未登录或会话已过期')}
   return r.json();
 }
 
@@ -997,8 +997,8 @@ async function doLogin(){
     const d=await r.json().catch(()=>({}));
     if(!r.ok){loginErr.value=d.detail||d.error?.message||('登录失败 (HTTP '+r.status+')');return}
     if(d.token){
-      authToken.value=d.token;localStorage.setItem('dola_admin_token',d.token);setCookie('dola_admin_token',d.token,1);
-      if(d.api_key){apiKey.value=d.api_key;localStorage.setItem('dola_api_key',d.api_key)}
+      authToken.value=d.token;localStorage.setItem('doubao_admin_token',d.token);setCookie('doubao_admin_token',d.token,1);
+      if(d.api_key){apiKey.value=d.api_key;localStorage.setItem('doubao_api_key',d.api_key)}
       authed.value=true;loginPwd.value='';fetchOverview();fetchLogStats();toast('登录成功','success');
     }else{loginErr.value=d.detail||d.message||'登录失败'}
   }catch(e){loginErr.value='请求失败: '+e.message}
@@ -1007,14 +1007,14 @@ async function doLogin(){
 
 async function doLogout(){
   try{await fetch(API+'/api/auth/logout',{method:'POST',headers:getHeaders()})}catch(e){}
-  localStorage.removeItem('dola_admin_token');delCookie('dola_admin_token');authToken.value='';apiKey.value='';localStorage.removeItem('dola_api_key');
+  localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token');authToken.value='';apiKey.value='';localStorage.removeItem('doubao_api_key');
   authed.value=false;session.value=null;sysInfo.value=null;logs.value=[];logStats.value=null;
   toast('已退出登录','info');
 }
 
 async function checkAuth(){
   if(!authToken.value){authed.value=false;return}
-  try{const r=await fetch(API+'/api/auth/status',{headers:getHeaders()});const d=await r.json();authed.value=!!d.logged_in;if(!authed.value){localStorage.removeItem('dola_admin_token');delCookie('dola_admin_token')}}catch(e){authed.value=false}
+  try{const r=await fetch(API+'/api/auth/status',{headers:getHeaders()});const d=await r.json();authed.value=!!d.logged_in;if(!authed.value){localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token')}}catch(e){authed.value=false}
 }
 
 /* ── Data fetching ── */
@@ -1171,13 +1171,13 @@ async function sendChat(){
   const hasCurAtts=curAtts.length>0;
   const useStream=chat.stream&&!hasCurAtts; // any attachment forces non-stream
   try{
-    if(chat.model.startsWith('dola-image')){
+    if(chat.model.startsWith('doubao-image')){
       aiMsg.media={images:[],videos:[],audios:[]};
       const r=await api('/v1/images/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.imgModel||chat.model,ratio:chat.imgRatio||'1:1',style:chat.imgStyle||undefined}),authMode:'apikey'});
       const imgs=Array.isArray(r.data)?r.data.map(d=>d.url||d.b64_json):(r.image_url?[r.image_url]:[]);
       if(r.data&&r.data[0]&&r.data[0].b64_json)imgs.length=0,imgs.push(...r.data.map(d=>d.b64_json.startsWith('data:')?d.b64_json:'data:image/png;base64,'+d.b64_json));
       aiMsg.media.images=imgs;aiMsg.content='已生成 '+imgs.length+' 张图片';
-    }else if(chat.model==='dola-video'){
+    }else if(chat.model==='doubao-video'){
       aiMsg.media={images:[],videos:[],audios:[]};
       const r=await api('/v1/video/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.videoModel||chat.model,ratio:chat.videoRatio||'16:9',duration:chat.videoDuration||'5'}),authMode:'apikey'});
       const vids=r.data?r.data.map(d=>d.url||d.video_url).filter(Boolean):(r.video_url?[r.video_url]:[]);

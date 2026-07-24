@@ -1,5 +1,5 @@
 """
-Dola Chat API Client - reverse-engineered desktop client protocol.
+Doubao Chat API Client - reverse-engineered desktop client protocol.
 
 Supports three endpoint families:
   - stream_call_bot (Alice legacy)
@@ -379,7 +379,7 @@ def _aws_sign_v4(
 
 class DoubaoChatClient:
     """
-    Async client for Dola's internal chat API (stream_call_bot).
+    Async client for Doubao's internal chat API (stream_call_bot).
 
     Usage:
         async with DoubaoChatClient(cookies, ms_token=token) as client:

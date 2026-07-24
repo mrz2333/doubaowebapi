@@ -48,19 +48,20 @@ _tool_obfuscator = ToolNameObfuscator(enabled=False)
 # ── Model definitions ────────────────────────────────────────
 
 CHAT_MODELS: Dict[str, int] = {
-    "dola": 0,
-    "dola-pro": 0,
-    "dola-think": 1,
-    "dola-expert": 3,
-    "dola-write": 0,  # writing assistant (alias for dola)
-    "dola-translate": 0,  # translation (alias for dola)
+    "doubao": 0,
+    "doubao-pro": 0,
+    "doubao-think": 1,
+    "doubao-expert": 3,
+    "doubao-write": 0,  # writing assistant (alias for dola)
+    "doubao-translate": 0,  # translation (alias for dola)
 }
 
 ALL_MODELS = [
-    {"id": m, "object": "model", "owned_by": "dola", "created": 0} for m in CHAT_MODELS
+    {"id": m, "object": "model", "owned_by": "doubao", "created": 0}
+    for m in CHAT_MODELS
 ] + [
-    {"id": "dola-image", "object": "model", "owned_by": "dola", "created": 0},
-    {"id": "dola-video", "object": "model", "owned_by": "dola", "created": 0},
+    {"id": "doubao-image", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "doubao-video", "object": "model", "owned_by": "doubao", "created": 0},
 ]
 
 
@@ -118,9 +119,9 @@ class ExpertQuotaTracker:
         If expert (3) is degraded, falls back to think (1).
         """
         if requested_deep_think == 3 and self.is_degraded:
-            return 1, "dola-think"
-        model_map = {0: "dola", 1: "dola-think", 3: "dola-expert"}
-        return requested_deep_think, model_map.get(requested_deep_think, "dola")
+            return 1, "doubao-think"
+        model_map = {0: "doubao", 1: "doubao-think", 3: "doubao-expert"}
+        return requested_deep_think, model_map.get(requested_deep_think, "doubao")
 
 
 _expert_tracker = ExpertQuotaTracker()
@@ -284,7 +285,7 @@ class _Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    model: str = "dola"
+    model: str = "doubao"
     messages: List[_Message]
     stream: bool = False
     temperature: Optional[float] = None
@@ -303,7 +304,7 @@ class ChatCompletionRequest(BaseModel):
 
 class ImageGenerationRequest(BaseModel):
     prompt: str
-    model: str = "dola-image"
+    model: str = "doubao-image"
     n: int = 1
     size: Optional[str] = "1024x1024"
     ratio: Optional[str] = None
@@ -376,7 +377,7 @@ def create_app(
         headless = os.environ.get("DOUBAO_HEADLESS", "true").lower() == "true"
         user_data_dir = os.environ.get(
             "DOUBAO_BROWSER_DATA",
-            os.path.join(os.path.expanduser("~"), ".dola_browser"),
+            os.path.join(os.path.expanduser("~"), ".doubao_browser"),
         )
         client = BrowserClient(headless=headless, user_data_dir=user_data_dir)
         await client.start()
@@ -399,7 +400,7 @@ def create_app(
             await client.stop()
 
     app = FastAPI(
-        title="Dola API",
+        title="Doubao API",
         version=__import__("doubaowebapi").__version__,
         lifespan=lifespan,
     )
@@ -834,7 +835,7 @@ def create_app(
         has_tools = bool(body.tools)
         if has_tools:
             # Use expert model for tool calling, with auto-fallback to think if degraded
-            requested_deep_think = CHAT_MODELS["dola-expert"]
+            requested_deep_think = CHAT_MODELS["doubao-expert"]
             use_deep_think, model_name = _expert_tracker.get_effective_mode(
                 requested_deep_think
             )
@@ -1185,7 +1186,7 @@ def create_app(
         prompt = body.get("prompt", "")
         file_name = body.get("file_name", "file.txt")
         file_size = body.get("file_size", 0)
-        model = body.get("model", "dola")
+        model = body.get("model", "doubao")
 
         if not file_id or not prompt:
             raise HTTPException(status_code=400, detail="Missing file_id or prompt")
@@ -1894,7 +1895,7 @@ def create_app(
         if expires_days is not None and expires_days <= 0:
             expires_days = None
         key_id = "key-" + secrets.token_urlsafe(8)
-        full_key = "dola-" + secrets.token_urlsafe(24)
+        full_key = "doubao-" + secrets.token_urlsafe(24)
         now = time.time()
         expires_at = now + expires_days * 86400 if expires_days else None
         info: Dict[str, Any] = {
@@ -2019,8 +2020,8 @@ def create_app(
                 "cdp_url": os.environ.get("DOUBAO_CDP_URL", ""),
                 "models": {
                     "chat": list(CHAT_MODELS.keys()),
-                    "image": ["dola-image"],
-                    "video": ["dola-video"],
+                    "image": ["doubao-image"],
+                    "video": ["doubao-video"],
                 },
             }
         )
@@ -2367,7 +2368,7 @@ def create_app(
                 {
                     "status": "qr_ready",
                     "qr_image_base64": qr_b64,
-                    "message": "请用Dola App 扫码。轮询 GET /v1/session/qr-login 获取状态。",
+                    "message": "请用Doubao App 扫码。轮询 GET /v1/session/qr-login 获取状态。",
                 }
             )
         else:
@@ -2421,14 +2422,14 @@ def run_server():
     import uvicorn
 
     host = os.environ.get("DOUBAO_HOST", "0.0.0.0")
-    port = int(os.environ.get("DOUBAO_PORT", "9090"))
+    port = int(os.environ.get("DOUBAO_PORT", "8458"))
     api_key = os.environ.get("DOUBAO_API_KEY", "")
     rpm = float(os.environ.get("DOUBAO_RPM_LIMIT", "20"))
     novnc_url = os.environ.get("DOUBAO_NOVNC_URL", "")
 
     app = create_app(api_key=api_key or None, rpm_limit=rpm)
 
-    print("\n  Dola API Server (Playwright)")
+    print("\n  Doubao API Server (Playwright)")
     print(f"  Listening on http://{host}:{port}")
     print(f"  Admin page: http://{host}:{port}/admin  (login with DOUBAO_API_KEY)")
     if novnc_url:

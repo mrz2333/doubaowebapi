@@ -17,7 +17,7 @@ CAPTCHA_HTML = """<!DOCTYPE html>
 <html lang="zh">
 <head>
 <meta charset="UTF-8">
-<title>Dola 验证</title>
+<title>Doubao 验证</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: -apple-system, "Microsoft YaHei", sans-serif;
@@ -100,7 +100,7 @@ function renderCaptcha(params) {
     var inst = new window.bdCaptcha.CaptchaVerify({
       info: {
         aid: params.aid || '582478',
-        appName: params.appName || 'dola',
+        appName: params.appName || 'doubao',
         lang: params.lang || 'zh',
         did: params.did || '',
         fp: params.fp || '',
