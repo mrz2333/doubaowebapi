@@ -2037,6 +2037,21 @@ def create_app(
         )
         return Response(content=p.read_bytes(), media_type=media)
 
+    @app.get("/static/vendor/{name}")
+    async def static_vendor(name: str):
+        safe = name.replace("/", "").replace("\\", "").replace("..", "")
+        if not safe or not safe.endswith((".js", ".css")):
+            raise HTTPException(status_code=404, detail="Not Found")
+        p = (_STATIC_DIR / "vendor" / safe).resolve()
+        try:
+            p.relative_to(_STATIC_DIR.resolve())
+        except ValueError:
+            raise HTTPException(status_code=404, detail="Not Found") from None
+        if not p.exists():
+            raise HTTPException(status_code=404, detail="Not Found")
+        media = "text/javascript" if safe.endswith(".js") else "text/css"
+        return Response(content=p.read_bytes(), media_type=media)
+
     @app.get("/admin/api/system")
     async def admin_system(request: Request):
         """Return system information."""
