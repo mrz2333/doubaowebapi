@@ -5,7 +5,7 @@ QR code login for Dola. Runs the full QR login flow
 in a background thread and notifies callers via callbacks.
 
 Flow:
-  1. GET dola.com → collect ttwid + base cookies
+  1. GET doubao.com → collect ttwid + base cookies
   2. GET /passport/safe/csrf_token → passport_csrf_token
   3. GET /passport/web/get_qrcode → QR token + base64 PNG
   4. Poll /passport/web/check_qrconnect every 1.5s

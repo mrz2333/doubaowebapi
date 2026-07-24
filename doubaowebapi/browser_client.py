@@ -1,4 +1,4 @@
-"""Playwright-based Dola client with in-browser fetch.
+"""Playwright-based Doubao client with in-browser fetch.
 
 Architecture:
 - Playwright: Login (QR scan via noVNC) + page session
@@ -126,7 +126,7 @@ class BrowserClient:
     # ------------------------------------------------------------------
 
     async def start(self):
-        """Connect to external browser via CDP, navigate to Dola, init httpx client."""
+        """Connect to external browser via CDP, navigate to Doubao, init httpx client."""
         import os as _os
 
         cdp_url = _os.environ.get("DOUBAO_CDP_URL", "")
@@ -142,15 +142,15 @@ class BrowserClient:
                     viewport={"width": 1280, "height": 720},
                     locale="zh-CN",
                 )
-            # Find an existing Dola page or create a new one
-            dola_page = None
+            # Find an existing Doubao page or create a new one
+            doubao_page = None
             for p in self._context.pages:
-                if "dola.com" in p.url or "doubao.com" in p.url:
-                    dola_page = p
+                if "doubao.com" in p.url:
+                    doubao_page = p
                     break
-            if dola_page:
-                self._page = dola_page
-                log.info("Reusing existing page: %s", dola_page.url)
+            if doubao_page:
+                self._page = doubao_page
+                log.info("Reusing existing page: %s", doubao_page.url)
             else:
                 self._page = await self._context.new_page()
                 log.info("Navigating to %s", CHAT_URL)
@@ -328,9 +328,9 @@ class BrowserClient:
 
         - Reads the session JSON file pointed to by DOUBAO_SESSION_FILE
           (env var, retains DOUBAO_ prefix for backwards compatibility but
-          contains Dola session data).
-        - Injects each cookie into the browser context with domain .dola.com.
-        - Reads a sibling file ``dola_localStorage.json`` (same directory as
+          contains Doubao session data).
+        - Injects each cookie into the browser context with domain .doubao.com.
+        - Reads a sibling file ``doubao_localStorage.json`` (same directory as
           the session file) and injects its key/value pairs as localStorage
           on the current page.
         - Reloads the page so that the injected state takes effect before the
@@ -365,7 +365,7 @@ class BrowserClient:
                     {
                         "name": str(name),
                         "value": str(value),
-                        "domain": ".dola.com",
+                        "domain": ".doubao.com",
                         "path": "/",
                         "sameSite": "Lax",
                     }
@@ -382,7 +382,7 @@ class BrowserClient:
             log.debug("inject_session: no cookies in session file")
 
         # ── 2. Inject localStorage ──
-        ls_file = session_path.parent / "dola_localStorage.json"
+        ls_file = session_path.parent / "doubao_localStorage.json"
         if ls_file.exists():
             try:
                 ls_data = json.loads(ls_file.read_text(encoding="utf-8"))
@@ -409,7 +409,9 @@ class BrowserClient:
             except Exception as e:
                 log.warning("inject_session: failed to set localStorage: %s", e)
         else:
-            log.debug("inject_session: no dola_localStorage.json next to session file")
+            log.debug(
+                "inject_session: no doubao_localStorage.json next to session file"
+            )
 
         # ── 3. Reload so injected state takes effect ──
         try:
@@ -483,7 +485,7 @@ class BrowserClient:
         """Check if logged in by looking for login button.
 
         Looks for both the Chinese (登录) and English (Log In) variants of the
-        login button so the check works on Dola's web UI regardless of locale.
+        login button so the check works on Doubao's web UI regardless of locale.
 
         Args:
             retry_count: Number of retries if login button is still visible
@@ -703,7 +705,7 @@ class BrowserClient:
                 {
                     "name": name,
                     "value": value,
-                    "domain": ".dola.com",
+                    "domain": ".doubao.com",
                     "path": "/",
                     "sameSite": "Lax",
                 }
@@ -793,7 +795,7 @@ class BrowserClient:
             )
 
             # Write localStorage to sibling file (read by _inject_session_from_file)
-            ls_file = path.parent / "dola_localStorage.json"
+            ls_file = path.parent / "doubao_localStorage.json"
             ls_file.write_text(
                 json.dumps(ls_data, ensure_ascii=False, indent=2), encoding="utf-8"
             )
@@ -1123,20 +1125,22 @@ class BrowserClient:
                 # Parse SSE line
                 try:
                     data = json.loads(chunk_json)
-                    # Check for Dola business errors in SSE data
-                    dola_code = data.get("code", 0)
-                    if dola_code and dola_code != 0:
-                        dola_msg = data.get("msg", "")
+                    # Check for Doubao business errors in SSE data
+                    doubao_code = data.get("code", 0)
+                    if doubao_code and doubao_code != 0:
+                        doubao_msg = data.get("msg", "")
                         log.warning(
-                            "Dola SSE error code=%d msg=%s", dola_code, dola_msg[:200]
+                            "Doubao SSE error code=%d msg=%s",
+                            doubao_code,
+                            doubao_msg[:200],
                         )
                         yield {
                             "error": True,
-                            "status": 429 if dola_code == 710022002 else 502,
-                            "body": f"[Error code={dola_code}: {dola_msg}]",
-                            "dola_code": dola_code,
+                            "status": 429 if doubao_code == 710022002 else 502,
+                            "body": f"[Error code={doubao_code}: {doubao_msg}]",
+                            "doubao_code": doubao_code,
                         }
-                        self.record_failure(dola_code)
+                        self.record_failure(doubao_code)
                         break
                     yield data
                 except json.JSONDecodeError:
@@ -1559,7 +1563,7 @@ class BrowserClient:
         timeout: float = 120,
         image_model: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Generate images by driving the real Dola web UI.
+        """Generate images by driving the real Doubao web UI.
 
         The /samantha/chat/completion endpoint used by the legacy generate_image
         is deprecated (returns 504). The new /chat/completion endpoint requires
@@ -1701,7 +1705,7 @@ class BrowserClient:
                 isolated_context=False,
             )
             log.info(
-                "Dola web UI skills discovered: %s",
+                "Doubao web UI skills discovered: %s",
                 json.dumps(skills, ensure_ascii=False),
             )
         except Exception as e:
@@ -1710,7 +1714,7 @@ class BrowserClient:
     async def _try_select_dropdown(self, page: Page, label: str, value: str) -> bool:
         """Best-effort attempt to open a skill dropdown and pick an option.
 
-        The Dola web UI renders ratio/style selectors as hover/portal popovers
+        The Doubao web UI renders ratio/style selectors as hover/portal popovers
         that are hard to drive programmatically. This helper tries several
         strategies but never raises — selection failure simply falls back to
         the default value.
@@ -2184,10 +2188,10 @@ class BrowserClient:
         file_data: bytes,
         filename: str,
     ) -> Dict[str, Any]:
-        """Upload a file to Dola's storage via browser-native ImageX SDK.
+        """Upload a file to Doubao's storage via browser-native ImageX SDK.
 
-        Instead of using prepare_upload (which returns 710010703 on dola.com),
-        we trigger the Dola frontend's own upload flow by setting the file
+        Instead of using prepare_upload (which returns 710010703 on doubao.com),
+        we trigger the Doubao frontend's own upload flow by setting the file
         input and capturing the resulting StoreUri from the ApplyImageUpload
         response. The frontend handles ApplyImageUpload → TOS upload →
         CommitImageUpload automatically.
@@ -2225,7 +2229,7 @@ class BrowserClient:
             # Write the file data to a temp file inside the container,
             # then use patchright's set_input_files which triggers the
             # native <input type="file"> change event.  This is more
-            # reliable than the React __reactProps hack because Dola's
+            # reliable than the React __reactProps hack because Doubao's
             # frontend listens for the real 'change' event to start the
             # ApplyImageUpload → TOS → CommitImageUpload flow.
             import os
@@ -2252,7 +2256,7 @@ class BrowserClient:
             if not store_uris:
                 raise RuntimeError("File upload timed out - no StoreUri received")
 
-            # Clear the pending attachment from Dola's UI to prevent it
+            # Clear the pending attachment from Doubao's UI to prevent it
             # being sent as a message on the next user interaction
             try:
                 await self._page.evaluate("""() => {
@@ -2319,11 +2323,11 @@ class BrowserClient:
     ) -> Dict[str, Any]:
         """Upload an image via browser-native ImageX SDK for vision.
 
-        Uses the same browser-native upload path as the Dola frontend:
+        Uses the same browser-native upload path as the Doubao frontend:
         triggers file input → ApplyImageUpload → TOS upload → CommitImageUpload.
         This produces ``tos-mya-i-*`` URIs that the chat/completion API recognises,
         unlike the legacy ``/samantha/pages/upload_image`` endpoint which returns
-        ``pages_upload_image_*`` URIs that Dola's model cannot see.
+        ``pages_upload_image_*`` URIs that Doubao's model cannot see.
 
         Returns dict with: uri, cdn_url, format, width, height.
         """
