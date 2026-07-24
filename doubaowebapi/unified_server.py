@@ -62,6 +62,7 @@ ALL_MODELS = [
 ] + [
     {"id": "doubao-image", "object": "model", "owned_by": "doubao", "created": 0},
     {"id": "doubao-video", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "doubao-music", "object": "model", "owned_by": "doubao", "created": 0},
 ]
 
 
@@ -1102,6 +1103,41 @@ def create_app(
             }
         )
 
+    @app.post("/v1/audio/generations")
+    async def audio_generations(request: Request):
+        """Generate music tracks. Returns audio URLs and metadata."""
+        _check_auth(request)
+        await bucket.acquire()
+        client = await _get_client()
+
+        body = await request.json()
+        prompt = body.get("prompt", "")
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Missing prompt")
+
+        lyric = body.get("lyric") or body.get("lyrics")
+        genre = body.get("genre")
+
+        try:
+            result = await client.generate_music(
+                prompt=prompt,
+                lyric=lyric,
+                genre=genre,
+            )
+        except RuntimeError as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+
+        tracks = result.get("tracks", [])
+        if not tracks:
+            raise HTTPException(status_code=502, detail="No music generated")
+
+        return JSONResponse(
+            {
+                "created": int(time.time()),
+                "data": tracks,
+            }
+        )
+
     @app.post("/v1/files")
     async def upload_file(request: Request):
         """Upload a file. Returns file metadata for use in chat."""
@@ -2022,6 +2058,7 @@ def create_app(
                     "chat": list(CHAT_MODELS.keys()),
                     "image": ["doubao-image"],
                     "video": ["doubao-video"],
+                    "music": ["doubao-music"],
                 },
             }
         )

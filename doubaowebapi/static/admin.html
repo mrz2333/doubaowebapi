@@ -1,10 +1,10 @@
-<!-- Doubao Console v1.1.1 - Admin Panel -->
+<!-- Doubao Console v1.2.0 - Admin Panel -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
-<title>Doubao Console v1.1.1</title>
+<title>Doubao Console v1.2.0</title>
 <link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
@@ -192,7 +192,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
       <img src="/static/img/logo.png" alt="Doubao" class="w-11 h-11 rounded-xl" onerror="this.style.display='none'">
       <div>
         <div class="font-bold text-lg" style="color:var(--text-primary)">Doubao Console</div>
-        <div class="text-xs" style="color:var(--text-muted)">doubaowebapi 管理后台 <span class="font-mono" style="opacity:.6">v1.1.1</span></div>
+        <div class="text-xs" style="color:var(--text-muted)">doubaowebapi 管理后台 <span class="font-mono" style="opacity:.6">v1.2.0</span></div>
       </div>
     </div>
     <div v-if="loginErr" class="mb-3 p-2.5 rounded-lg text-sm" style="background:var(--error-bg);color:var(--error);border:1px solid var(--error)">{{loginErr}}</div>
@@ -230,7 +230,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
   </nav>
   <div class="p-4 border-t space-y-3" style="border-color:var(--border)">
     <div class="text-center">
-      <span class="font-mono text-[10px]" style="color:var(--text-muted)">v1.1.1</span>
+      <span class="font-mono text-[10px]" style="color:var(--text-muted)">v1.2.0</span>
     </div>
     <div class="flex items-center gap-2 text-xs" style="color:var(--text-muted)">
       <span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'pulse':'']" :style="{background:session&&session.logged_in?'var(--success)':'var(--error)'}"></span>
@@ -617,6 +617,11 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
     </select>
   </template>
   <!-- Music options -->
+  <template v-if="chat.model==='doubao-music'">
+    <select v-model="chat.musicGenre" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-32">
+      <option value="">自动风格</option><option v-for="g in musicGenres" :key="g" :value="g">{{g}}</option>
+    </select>
+  </template>
   <button @click="newConversation" class="btn-sm text-xs ml-auto">新建会话</button>
   <button @click="clearChat" class="btn-sm text-xs">清空</button>
 </div>
@@ -627,6 +632,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
     <span class="text-xs md:text-sm">
       <span v-if="chat.model.startsWith('doubao-image')">描述要生成的图片</span>
       <span v-else-if="chat.model==='doubao-video'">描述要生成的视频</span>
+      <span v-else-if="chat.model==='doubao-music'">描述要生成的音乐</span>
       
       <span v-else>开始对话</span>
     </span>
@@ -668,8 +674,10 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
             <img :src="u" class="w-full rounded-lg border cursor-pointer" style="border-color:var(--border)" @click="previewImage=u" loading="lazy"/>
           </div>
         </div>
-        <a v-for="(u,j) in (m.media.videos||[])" :key="'vid'+j" :href="u" target="_blank" class="block text-xs" style="color:var(--accent)">视频 #{{j+1}}</a>
-        <a v-for="(u,j) in (m.media.audios||[])" :key="'aud'+j" :href="u" target="_blank" class="block text-xs" style="color:var(--accent)">音频 #{{j+1}}</a>
+        <a v-for="(u,j) in (m.media.videos||[])" :key="'vid'+j" :href="u" target="_blank" class="block text-xs" style="color:var(--accent)">🎬 视频 #{{j+1}}</a>
+        <div v-for="(u,j) in (m.media.audios||[])" :key="'aud'+j" class="mt-1">
+          <audio :src="u" controls class="w-full max-w-xs" style="height:36px"></audio>
+        </div>
       </div>
       <!-- Image preview overlay -->
       <div v-if="previewImage" @click="previewImage=null" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 cursor-pointer" style="background:rgba(0,0,0,.8)">
@@ -732,7 +740,7 @@ pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-a
       <span v-if="chat.loading" class="flex items-center gap-1">
         <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
       </span>
-      <span v-else>{{chat.model.startsWith('doubao-image')?'生图':chat.model==='doubao-video'?'生视频':'发送'}}</span>
+      <span v-else>{{chat.model.startsWith('doubao-image')?'生图':chat.model==='doubao-video'?'生视频':chat.model==='doubao-music'?'生音乐':'发送'}}</span>
     </button>
   </div>
 </div>
@@ -941,18 +949,19 @@ const health=ref(null);
 const cdpUrl=ref('');
 const cdpEnabled=computed(()=>!!cdpUrl.value);
 const screenshot=reactive({img:"",loading:false,time:""});
-const chat=reactive({model:'doubao-think',stream:true,input:'',loading:false,error:'',messages:[],conversationId:null,attachments:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5'});
-const chatModels=computed(()=>{const base=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video',];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
-const canAttach=computed(()=>!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video');
+const chat=reactive({model:'doubao-think',stream:true,input:'',loading:false,error:'',messages:[],conversationId:null,attachments:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5',musicGenre:''});
+const chatModels=computed(()=>{const base=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music',];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
+const canAttach=computed(()=>!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video'&&chat.model!=='doubao-music');
 const chatScroll=ref(null);
 const previewImage=ref(null);
-const chatPlaceholder=computed(()=>chat.model.startsWith('doubao-image')?'描述要生成的图片...':chat.model==='doubao-video'?'描述要生成的视频...':'输入消息...');
+const chatPlaceholder=computed(()=>chat.model.startsWith('doubao-image')?'描述要生成的图片...':chat.model==='doubao-video'?'描述要生成的视频...':chat.model==='doubao-music'?'描述要生成的音乐...':'输入消息...');
 const logs=ref([]);
 const logStats=ref(null);
 const logRealtime=ref(true);
 const keys=reactive({list:[],loading:false,showCreate:false,newName:'',newExpires:'',newKey:null});
 const currentTime=ref('');
-const allModels=['doubao','dola-quick','doubao-think','dola-auto','doubao-expert','doubao-pro','doubao-image','doubao-video',];
+const allModels=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music',];
+const musicGenres=['流行','摇滚','民谣','电子','古典','爵士','R&B','嘻哈','国风','轻音乐'];
 const imageStyles=['人像摄影','电影写真','中国风','动漫','3D渲染','赛博朋克','CG动画','水墨画','油画','古典','水彩画','卡通','平面插画','风景','港风动漫','像素风格','荧光绘画','彩铅画','手办','儿童绘画','抽象','锐笔插画','二次元','油墨印刷','版画','莫奈','毕加索','伦勃朗','马蒂斯','巴洛克','复古动漫','绘本'];
 
 /* ── Collapsible state ── */
@@ -1182,6 +1191,12 @@ async function sendChat(){
       const r=await api('/v1/video/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.videoModel||chat.model,ratio:chat.videoRatio||'16:9',duration:chat.videoDuration||'5'}),authMode:'apikey'});
       const vids=r.data?r.data.map(d=>d.url||d.video_url).filter(Boolean):(r.video_url?[r.video_url]:[]);
       aiMsg.media.videos=vids;aiMsg.content='已生成 '+vids.length+' 个视频';
+    }else if(chat.model==='doubao-music'){
+      aiMsg.media={images:[],videos:[],audios:[]};
+      const r=await api('/v1/audio/generations',{method:'POST',body:JSON.stringify({prompt:text,genre:chat.musicGenre||undefined}),authMode:'apikey'});
+      const trks=r.data?r.data:[];
+      if(trks.length){aiMsg.media.audios=trks.map(t=>t.audio_url).filter(Boolean);aiMsg.content='已生成 '+trks.length+' 首音乐'+(trks[0]?.title?(' · '+trks[0].title):'');}
+      else{aiMsg.content='音乐生成完成（无返回结果）';}
     }else if(useStream){
       const body={model:chat.model,messages:history,stream:true};
       if(chat.conversationId)body.conversation_id=chat.conversationId;
