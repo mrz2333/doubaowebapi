@@ -52,7 +52,7 @@ DOUBAO_URL = "https://www.doubao.com"
 CHAT_URL = f"{DOUBAO_URL}/chat/"
 COMPLETION_URL = f"{DOUBAO_URL}/chat/completion"
 SAMANTHA_COMPLETION_URL = f"{DOUBAO_URL}/samantha/chat/completion"
-DEFAULT_BOT_ID = "7339470689562525703"
+DEFAULT_BOT_ID = "7338286299411103781"
 
 
 class BrowserClient:
@@ -1032,13 +1032,17 @@ class BrowserClient:
                 "is_audio": False,
                 "answer_with_suggest": False,
                 "tts_switch": False,
+                "agent_mode": 2,
                 "need_deep_think": use_deep_think,
                 "click_clear_context": False,
                 "from_suggest": False,
                 "is_regen": False,
                 "is_replace": False,
+                "is_from_click_option": False,
+                "is_from_click_softlink": False,
                 "disable_sse_cache": False,
                 "select_text_action": "",
+                "is_select_text": False,
                 "resend_for_regen": False,
                 "scene_type": 0,
                 "unique_key": str(uuid.uuid4()),
@@ -1053,6 +1057,7 @@ class BrowserClient:
                 "shared_app_id": "",
                 "sse_recv_event_options": {"support_chunk_delta": True},
                 "is_ai_playground": False,
+                "is_old_user": True,
                 "recovery_option": {
                     "is_recovery": False,
                     "req_create_time_sec": now_sec,
@@ -1060,12 +1065,12 @@ class BrowserClient:
                 },
                 "message_storage_type": 0,
             },
+            "user_context": [],
             "ext": {
                 "use_deep_think": str(use_deep_think),
                 "fp": self._fp or "",
                 "collection_id": "",
                 "commerce_credit_config_enable": "0",
-                "sub_conv_firstmet_type": "1" if need_create else "0",
             },
         }
 
@@ -1469,8 +1474,11 @@ class BrowserClient:
                 "need_create_conversation": True,
                 "launch_stage": 1,
                 "is_replace": False,
+                "is_from_click_option": False,
+                "is_from_click_softlink": False,
                 "is_delete": False,
                 "is_ai_playground": False,
+                "is_old_user": True,
                 "memory_type": 2,
                 "message_from": 0,
                 "use_deep_think": False,
@@ -1856,8 +1864,11 @@ class BrowserClient:
                 "need_create_conversation": True,
                 "launch_stage": 1,
                 "is_replace": False,
+                "is_from_click_option": False,
+                "is_from_click_softlink": False,
                 "is_delete": False,
                 "is_ai_playground": False,
+                "is_old_user": True,
                 "memory_type": 2,
                 "message_from": 0,
                 "use_deep_think": False,
@@ -2013,8 +2024,11 @@ class BrowserClient:
                 "need_create_conversation": True,
                 "launch_stage": 1,
                 "is_replace": False,
+                "is_from_click_option": False,
+                "is_from_click_softlink": False,
                 "is_delete": False,
                 "is_ai_playground": False,
+                "is_old_user": True,
                 "memory_type": 2,
                 "message_from": 0,
                 "use_deep_think": False,
@@ -2486,13 +2500,17 @@ class BrowserClient:
                 "is_audio": False,
                 "answer_with_suggest": False,
                 "tts_switch": False,
+                "agent_mode": 2,
                 "need_deep_think": use_deep_think,
                 "click_clear_context": False,
                 "from_suggest": False,
                 "is_regen": False,
                 "is_replace": False,
+                "is_from_click_option": False,
+                "is_from_click_softlink": False,
                 "disable_sse_cache": False,
                 "select_text_action": "",
+                "is_select_text": False,
                 "resend_for_regen": False,
                 "scene_type": 0,
                 "unique_key": str(uuid.uuid4()),
@@ -2507,6 +2525,7 @@ class BrowserClient:
                 "shared_app_id": "",
                 "sse_recv_event_options": {"support_chunk_delta": True},
                 "is_ai_playground": False,
+                "is_old_user": True,
                 "recovery_option": {
                     "is_recovery": False,
                     "req_create_time_sec": now_sec,
@@ -2519,7 +2538,6 @@ class BrowserClient:
                 "fp": self._fp or "",
                 "collection_id": "",
                 "commerce_credit_config_enable": "0",
-                "sub_conv_firstmet_type": "1",
             },
         }
 
