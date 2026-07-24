@@ -1,4 +1,4 @@
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 
 from .browser_client import BrowserClient
 from .captcha_handler import AutoCaptchaHandler, CaptchaHandler

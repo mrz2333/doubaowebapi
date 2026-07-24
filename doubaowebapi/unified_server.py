@@ -533,20 +533,27 @@ def create_app(
                 status_code=503,
                 detail="Not logged in. Visit /auth to scan QR code.",
             )
-        # If captcha flagged, try a lazy re-check of fetch hook before rejecting
+        # If captcha flagged, try auto-recovery before rejecting
         if client.needs_captcha:
+            log.info("Auto-recovery: attempting page reload to clear captcha flag")
             try:
+                await client._page.reload(wait_until="load", timeout=30000)
+                await asyncio.sleep(3)
+                await client._apply_anti_detection_patches()
+                await client._check_login_state()
+                # Re-check fetch hook
                 hooked = await client._page.evaluate(
                     "() => { try { const s = window.fetch.toString(); return !s.includes('native code'); } catch(e) { return false; } }"
                 )
                 if hooked:
                     log.info(
-                        "Lazy re-check: fetch hook is active, clearing needs_captcha"
+                        "Auto-recovery: fetch hook restored, clearing needs_captcha"
                     )
                     client._needs_captcha = False
                     client._fetch_hook_confirmed = True
                     client.record_success()
                 else:
+                    log.warning("Auto-recovery: fetch hook still missing after reload")
                     raise HTTPException(
                         status_code=503,
                         detail="Captcha verification required (710022004). Please complete captcha via VNC or re-login.",
@@ -554,7 +561,7 @@ def create_app(
             except HTTPException:
                 raise
             except Exception as e:
-                log.warning("Lazy re-check failed: %s", e)
+                log.warning("Auto-recovery failed: %s", e)
                 raise HTTPException(
                     status_code=503,
                     detail="Captcha verification required (710022004). Please complete captcha via VNC or re-login.",
