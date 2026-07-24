@@ -52,8 +52,14 @@ CHAT_MODELS: Dict[str, int] = {
     "doubao-pro": 0,
     "doubao-think": 1,
     "doubao-expert": 3,
-    "doubao-write": 0,  # writing assistant (alias for dola)
-    "doubao-translate": 0,  # translation (alias for dola)
+    "doubao-quick": 0,  # fast response (no deep think)
+    "doubao-auto": 2,  # auto deep think (model decides)
+    "doubao-write": 0,  # writing assistant
+    "doubao-translate": 0,  # translation
+    "doubao-research": 1,  # deep research (uses think mode)
+    "doubao-ppt": 0,  # PPT generation
+    "doubao-podcast": 0,  # AI podcast
+    "doubao-sheet": 0,  # AI spreadsheet
 }
 
 ALL_MODELS = [
@@ -63,12 +69,6 @@ ALL_MODELS = [
     {"id": "doubao-image", "object": "model", "owned_by": "doubao", "created": 0},
     {"id": "doubao-video", "object": "model", "owned_by": "doubao", "created": 0},
     {"id": "doubao-music", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-quick", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-auto", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-research", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-ppt", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-podcast", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-sheet", "object": "model", "owned_by": "doubao", "created": 0},
 ]
 
 
