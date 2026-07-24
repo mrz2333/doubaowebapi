@@ -550,7 +550,7 @@ class BrowserClient:
                     result.device_id = samWeb.web_id || '';
                 } catch(e) {}
                 try {
-                    const tea = JSON.parse(localStorage.getItem('__tea_cache_tokens_495671') || '{}');
+                    const tea = JSON.parse(localStorage.getItem('__tea_cache_tokens_6383') || '{}');
                     result.web_id = tea.web_id || '';
                 } catch(e) {}
                 const fpCookie = document.cookie.split(';')
@@ -769,8 +769,8 @@ class BrowserClient:
                 const result = {};
                 const keys = [
                     'samantha_web_web_id',
-                    '__tea_cache_tokens_495671',
-                    '__tea_cache_tokens_495671'
+                    '__tea_cache_tokens_6383',
+                    '__tea_cache_tokens_6383'
                 ];
                 for (const k of keys) {
                     const v = localStorage.getItem(k);
@@ -850,14 +850,14 @@ class BrowserClient:
     def _build_query_params(self) -> Dict[str, str]:
         """Build the standard query parameters for API calls."""
         params = {
-            "aid": "495671",
+            "aid": "6383",
             "device_id": self._device_id or "",
-            "device_platform": "web",
+            "device_platform": "webapp",
             "fp": self._fp or "",
             "language": "zh",
             "pc_version": "3.19.4",
             "pkg_type": "release_version",
-            "real_aid": "495671",
+            "real_aid": "6383",
             "region": "",
             "samantha_web": "1",
             "sys_region": "",
