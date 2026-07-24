@@ -1,177 +1,296 @@
+<!-- Doubao Console v1.4.8 - Admin Panel -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Doubao API Console</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+<title>Doubao Console v1.4.8</title>
 <link rel="icon" type="image/png" sizes="64x64" href="/static/img/favicon-64.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/img/favicon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/static/img/apple-touch-icon.png">
-<meta name="theme-color" content="#0f172a">
-<meta name="apple-mobile-web-app-title" content="Doubao">
+<meta name="theme-color" content="#0c0e14">
+<meta name="apple-mobile-web-app-title" content="Dola">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
-tailwind.config={theme:{extend:{colors:{
-brand:{50:'#eef2ff',100:'#e0e7ff',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81'},
-surface:{50:'#f8fafc',100:'#f1f5f9',200:'#e2e8f0',700:'#334155',800:'#1e293b',900:'#0f172a'}
-}}}}
+tailwind.config={theme:{extend:{fontFamily:{sans:['DM Sans','PingFang SC','Microsoft YaHei','sans-serif'],mono:['JetBrains Mono','monospace']}}}}
 </script>
 <style>
+/* ── Theme Variables ── */
+:root{
+  --bg-base:#0c0e14;--bg-card:#161923;--bg-elevated:#1e2231;--bg-hover:#262b3a;
+  --text-primary:#e8eaf0;--text-secondary:#9ba3b5;--text-muted:#636b7e;
+  --accent:#4F6BFF;--accent-hover:#6580ff;--accent-muted:rgba(79,107,255,.12);
+  --border:rgba(255,255,255,.06);--border-hover:rgba(255,255,255,.12);
+  --success:#22c55e;--success-bg:rgba(34,197,94,.08);
+  --warning:#f59e0b;--warning-bg:rgba(245,158,11,.08);
+  --error:#ef4444;--error-bg:rgba(239,68,68,.08);
+  --shadow-sm:0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:0 4px 12px rgba(0,0,0,.5);
+  --shadow-hover:0 8px 20px rgba(0,0,0,.6);
+}
+[data-theme="light"]{
+  --bg-base:#f5f7fa;--bg-card:#ffffff;--bg-elevated:#eef1f6;--bg-hover:#e2e7ef;
+  --text-primary:#111827;--text-secondary:#4b5563;--text-muted:#9ca3af;
+  --accent:#4F6BFF;--accent-hover:#3b57e6;--accent-muted:rgba(79,107,255,.06);
+  --border:rgba(0,0,0,.07);--border-hover:rgba(0,0,0,.12);
+  --success:#16a34a;--success-bg:rgba(22,163,74,.05);
+  --warning:#d97706;--warning-bg:rgba(217,119,6,.05);
+  --error:#dc2626;--error-bg:rgba(220,38,38,.05);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,.06);
+  --shadow-hover:0 6px 16px rgba(0,0,0,.1);
+}
 [v-cloak]{display:none}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;background:#0f172a;overscroll-behavior:none}
-/* ── Desktop sidebar ── */
-.sidebar-item{transition:all .15s}
-.sidebar-item:hover{background:rgba(99,102,241,.15)}
-.sidebar-item.active{background:rgba(99,102,241,.2);border-right:3px solid #6366f1}
-.glass{background:rgba(255,255,255,.03);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06)}
-.card{background:#1e293b;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px}
-.card-glow{box-shadow:0 0 20px rgba(99,102,241,.05)}
-.metric{background:linear-gradient(135deg,#1e293b 0%,#1a2332 100%)}
-pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;scrollbar-width:thin}
-pre.out::-webkit-scrollbar{width:6px}
-pre.out::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
-.thinking-box{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border-left:3px solid #a78bfa}
-.pulse{animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-input,select,textarea{background:#1e293b;border:1px solid #334155;color:#e2e8f0;border-radius:8px;padding:10px 14px;font-size:16px} /* 16px prevents iOS zoom */
-input:focus,select:focus,textarea:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.15)}
-.btn{padding:8px 18px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s;white-space:nowrap}
-.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(99,102,241,.3)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;transition:background-color .2s,border-color .2s,color .15s}
+body{font-family:'DM Sans','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg-base);color:var(--text-primary);overscroll-behavior:none;margin:0}
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--text-muted);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text-secondary)}
+pre.out{scrollbar-width:thin}
+/* ── Cards ── */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:var(--shadow-sm);transition:transform .15s,box-shadow .15s,background-color .2s,border-color .2s}
+.card-hover:hover{transform:translateY(-1px);box-shadow:var(--shadow-hover);border-color:var(--border-hover)}
+/* ── Sidebar ── */
+.sidebar-item{transition:all .15s;border-radius:8px;margin:2px 8px}
+.sidebar-item:hover{background:var(--accent-muted)}
+.sidebar-item.active{background:var(--accent-muted);color:var(--accent);font-weight:600}
+.sidebar-item.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:3px;background:var(--accent);border-radius:0 2px 2px 0}
+/* ── Inputs ── */
+input,select,textarea{background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;padding:10px 14px;font-size:16px;font-family:inherit;transition:border-color .15s,box-shadow .15s,background-color .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-muted)}
+input::placeholder,textarea::placeholder{color:var(--text-muted)}
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 18px;background:var(--accent);color:#fff;border-radius:8px;font-size:13px;font-weight:600;border:none;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.btn:hover{background:var(--accent-hover);transform:translateY(-1px);box-shadow:var(--shadow-md)}
 .btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-.btn-sm{padding:5px 12px;background:#334155;color:#e2e8f0;border-radius:6px;font-size:12px;border:none;cursor:pointer;white-space:nowrap}
-.btn-sm:hover{background:#475569}
+.btn-secondary{background:transparent;border:1px solid var(--border);color:var(--text-secondary)}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-muted)}
+.btn-danger{background:var(--error);color:#fff}
+.btn-danger:hover{opacity:.9}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:8px;background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border);cursor:pointer;white-space:nowrap;font-family:inherit;font-weight:500;transition:all .15s}
+.btn-sm:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-muted)}
 .btn-sm:active{transform:scale(.97)}
-.btn-warn{padding:8px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:8px;font-size:13px;font-weight:500;border:none;cursor:pointer;transition:all .15s;white-space:nowrap}
-.btn-warn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(245,158,11,.3)}
-.btn-warn:active{transform:scale(.97)}
+.btn-icon{padding:6px;border:1px solid var(--border);background:var(--bg-elevated);border-radius:8px;cursor:pointer;color:var(--text-secondary);display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-muted)}
+/* ── Metric card ── */
+.metric-card{display:flex;align-items:flex-start;gap:12px}
+.metric-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.metric-value{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:1.5rem;line-height:1.2;color:var(--text-primary)}
+.metric-label{font-size:12px;color:var(--text-muted);margin-top:2px}
+/* ── Table ── */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.table-wrap table{width:100%;border-collapse:collapse}
+.table-wrap th{text-align:left;font-size:11px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;padding:8px 12px;border-bottom:1px solid var(--border)}
+.table-wrap td{padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.table-wrap tr:last-child td{border-bottom:none}
+.table-wrap tbody tr{transition:background-color .1s}
+.table-wrap tbody tr:hover{background:var(--accent-muted)}
+/* ── Toast ── */
+.toast-enter{animation:toastIn .25s ease}
+.toast-leave{animation:toastOut .2s ease forwards}
+@keyframes toastIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes toastOut{to{transform:translateX(100%);opacity:0}}
+/* ── Badge ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;line-height:1.5}
+.badge-success{background:var(--success-bg);color:var(--success)}
+.badge-error{background:var(--error-bg);color:var(--error)}
+.badge-warning{background:var(--warning-bg);color:var(--warning)}
+.badge-muted{background:var(--bg-elevated);color:var(--text-muted)}
+.badge-accent{background:var(--accent-muted);color:var(--accent)}
+/* ── Chat ── */
+.thinking-box{background:var(--bg-elevated);border-left:3px solid #a78bfa;border-radius:8px;padding:8px 12px}
 .chat-md{line-height:1.6}
-.chat-md p{margin:0 0 8px}
-.chat-md p:last-child{margin-bottom:0}
-.chat-md strong{color:#e0e7ff;font-weight:600}
+.chat-md p{margin:0 0 8px}.chat-md p:last-child{margin-bottom:0}
+.chat-md strong{color:var(--text-primary);font-weight:600}
 .chat-md em{color:#c4b5fd}
 .chat-md ul,.chat-md ol{margin:6px 0 8px;padding-left:20px}
-.chat-md ul{list-style:disc}
-.chat-md ol{list-style:decimal}
+.chat-md ul{list-style:disc}.chat-md ol{list-style:decimal}
 .chat-md li{margin:2px 0}
-.chat-md code:not(pre code){background:#0f172a;color:#5eead4;padding:1px 5px;border-radius:4px;font-size:.85em;font-family:'JetBrains Mono',monospace}
-.chat-md pre{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:12px;overflow-x:auto;margin:8px 0}
+.chat-md code:not(pre code){background:var(--bg-base);color:#5eead4;padding:1px 5px;border-radius:4px;font-size:.85em;font-family:'JetBrains Mono',monospace}
+.chat-md pre{background:var(--bg-base);border:1px solid var(--border);border-radius:8px;padding:12px;overflow-x:auto;margin:8px 0}
 .chat-md pre code{color:#86efac;font-size:12px;font-family:'JetBrains Mono',monospace;line-height:1.5}
-.chat-md a{color:#93c5fd;text-decoration:underline}
-.chat-md h1,.chat-md h2,.chat-md h3{color:#fff;font-weight:600;margin:10px 0 6px}
+.chat-md a{color:var(--accent);text-decoration:underline}
+.chat-md h1,.chat-md h2,.chat-md h3{color:var(--text-primary);font-weight:600;margin:10px 0 6px}
 .chat-md h1{font-size:1.1em}.chat-md h2{font-size:1.05em}.chat-md h3{font-size:1em}
-.chat-md blockquote{border-left:3px solid #6366f1;padding-left:10px;color:#94a3b8;margin:6px 0}
-/* ── Mobile bottom tab bar ── */
-.tab-bar-item{transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:10px;color:#64748b;border:none;background:none;cursor:pointer;flex:1;min-width:0}
-.tab-bar-item.active{color:#818cf8}
+.chat-md blockquote{border-left:3px solid var(--accent);padding-left:10px;color:var(--text-muted);margin:6px 0}
+pre.out{max-height:420px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;scrollbar-width:thin}
+.pulse{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* ── Toggle switch ── */
+.toggle{position:relative;width:40px;height:22px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:11px;cursor:pointer;transition:all .2s}
+.toggle.active{background:var(--accent);border-color:var(--accent)}
+.toggle::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle.active::after{transform:translateX(18px)}
+/* ── Quick action button ── */
+.quick-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;border-radius:10px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;transition:all .15s;min-width:72px}
+.quick-btn:hover{border-color:var(--accent);background:var(--accent-muted);transform:translateY(-1px)}
+.quick-btn:active{transform:scale(.97)}
+.quick-btn svg{width:20px;height:20px;color:var(--accent)}
+.quick-btn span{font-size:11px;color:var(--text-secondary);font-weight:500}
+/* ── Collapsible ── */
+.collapse-toggle{cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+.collapse-toggle svg{width:16px;height:16px;transition:transform .2s;color:var(--text-muted)}
+.collapse-toggle.open svg{transform:rotate(90deg)}
+/* ── Mobile tab bar ── */
+.tab-bar-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;font-size:10px;color:var(--text-muted);border:none;background:none;cursor:pointer;flex:1;min-width:0;transition:color .15s}
+.tab-bar-item.active{color:var(--accent)}
 .tab-bar-item svg{width:20px;height:20px}
 /* ── Responsive ── */
-@media (max-width:767px){
+@media(max-width:767px){
   .card{padding:14px;border-radius:10px}
-  .btn,.btn-warn{padding:8px 14px;font-size:13px}
+  .btn{padding:8px 14px;font-size:13px}
   .btn-sm{padding:5px 10px;font-size:11px}
   input,select,textarea{padding:10px 12px}
   .desktop-only{display:none!important}
   .mobile-only{display:block!important}
   .mobile-flex{display:flex!important}
   .mobile-hidden{display:none!important}
-  .chat-msg-max{max-width:90%!important}
-  /* Fix iOS safe areas */
   .safe-bottom{padding-bottom:env(safe-area-inset-bottom,8px)}
   .safe-top{padding-top:env(safe-area-inset-top,0px)}
 }
-@media (min-width:768px){
+@media(min-width:768px){
   .desktop-only{display:flex!important}
   .mobile-only{display:none!important}
   .mobile-flex{display:none!important}
   .mobile-hidden{display:block!important}
 }
-/* ── Scrollbar ── */
-.overflow-x-auto{-webkit-overflow-scrolling:touch;scrollbar-width:thin}
-.overflow-x-auto::-webkit-scrollbar{height:4px}
-.overflow-x-auto::-webkit-scrollbar-thumb{background:#475569;border-radius:3px}
+/* Message action buttons */
+.msg-actions{opacity:0;transition:opacity .15s}
+.chat-msg-max:hover .msg-actions{opacity:1}
+.msg-act-btn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;border:none;background:transparent;cursor:pointer;color:inherit;opacity:.6;transition:all .15s}
+.msg-act-btn:hover{opacity:1;background:var(--accent-muted);color:var(--accent)}
 </style>
 </head>
-<body class="min-h-screen text-slate-200">
+<body class="min-h-screen">
 <div id="app" v-cloak>
+
+<!-- ═══ Toast Notifications ═══ -->
+<div class="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none" style="max-width:360px">
+  <div v-for="t in toasts" :key="t.id"
+    :class="['pointer-events-auto flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg toast-enter',t.leaving?'toast-leave':'']"
+    :style="{background:'var(--bg-card)',borderColor:t.type==='error'?'var(--error)':t.type==='success'?'var(--success)':'var(--accent)'}">
+    <svg v-if="t.type==='success'" class="w-4 h-4 mt-0.5 shrink-0" style="color:var(--success)" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+    <svg v-else-if="t.type==='error'" class="w-4 h-4 mt-0.5 shrink-0" style="color:var(--error)" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+    <svg v-else class="w-4 h-4 mt-0.5 shrink-0" style="color:var(--accent)" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+    <span class="text-sm" style="color:var(--text-primary)">{{t.msg}}</span>
+  </div>
+</div>
+
 <!-- ═══ Login Page ═══ -->
-<div v-if="!authed" class="min-h-screen flex items-center justify-center bg-surface-900 px-4">
-<div class="card w-full max-w-sm">
-<div class="flex items-center gap-3 mb-6">
-<img src="/static/img/logo.png" alt="Doubao" class="w-11 h-11 rounded-xl" onerror="this.style.display='none'">
-<div><div class="font-bold text-white text-lg">Doubao Console</div><div class="text-xs text-slate-500">doubaowebapi 管理后台</div></div>
+<div v-if="!authed" class="min-h-screen flex items-center justify-center px-4" style="background:var(--bg-base)">
+  <div class="card w-full max-w-sm">
+    <div class="flex items-center gap-3 mb-6">
+      <img src="/static/img/logo.png" alt="Dola" class="w-11 h-11 rounded-xl" onerror="this.style.display='none'">
+      <div>
+        <div class="font-bold text-lg" style="color:var(--text-primary)">Doubao Console</div>
+        <div class="text-xs" style="color:var(--text-muted)">doubaowebapi 管理后台 <span class="font-mono" style="opacity:.6">v1.4.8</span></div>
+      </div>
+    </div>
+    <div v-if="loginErr" class="mb-3 p-2.5 rounded-lg text-sm" style="background:var(--error-bg);color:var(--error);border:1px solid var(--error)">{{loginErr}}</div>
+    <div class="mb-4">
+      <label class="text-xs mb-1.5 block" style="color:var(--text-muted)">管理密码</label>
+      <input type="password" v-model="loginPwd" @keydown.enter="doLogin" class="w-full" placeholder="输入管理密码..." autofocus>
+    </div>
+    <button @click="doLogin" :disabled="loginLoading" class="btn w-full py-3">
+      <span v-if="loginLoading" class="flex items-center justify-center gap-2">
+        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+        登录中...
+      </span>
+      <span v-else>登录</span>
+    </button>
+  </div>
 </div>
-<div v-if="loginErr" class="mb-3 p-2.5 bg-red-900/30 border border-red-800 rounded-lg text-red-300 text-sm">{{loginErr}}</div>
-<div class="mb-4">
-<label class="text-xs text-slate-400 mb-1.5 block">管理密码</label>
-<input type="password" v-model="loginPwd" @keydown.enter="doLogin" class="w-full" placeholder="输入管理密码..." autofocus>
-</div>
-<button @click="doLogin" :disabled="loginLoading" class="btn w-full py-3">
-<span v-if="loginLoading" class="flex items-center justify-center gap-2">
-<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
-登录中...</span>
-<span v-else>登录</span></button>
-</div></div>
 
 <!-- ═══ Main App ═══ -->
 <div v-else class="flex flex-col md:flex-row" style="height:100dvh">
 
 <!-- ── Desktop Sidebar ── -->
-<aside class="desktop-only w-56 bg-surface-900 border-r border-slate-800 flex-col shrink-0 hidden">
-<div class="p-5 border-b border-slate-800">
-<div class="flex items-center gap-2">
-<img src="/static/img/logo.png" alt="Doubao" class="w-8 h-8 rounded-lg" onerror="this.style.display='none'">
-<span class="font-bold text-white text-sm">Doubao Console</span>
-</div></div>
-<nav class="flex-1 py-3">
-<button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i"
-:class="['sidebar-item w-full text-left px-5 py-2.5 text-sm flex items-center gap-3',activeTab===i?'active text-white':'text-slate-400']">
-<span v-html="icons[i]"></span>{{tab.name}}</button>
-</nav>
-<div class="p-4 border-t border-slate-800 space-y-2">
-<div class="flex items-center gap-2 text-xs text-slate-500">
-<span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'bg-green-400':'bg-red-400']"></span>
-{{session&&session.logged_in?'已登录':'未登录'}}</div>
-<button @click="doLogout" class="btn-sm w-full text-center">退出登录</button>
-</div></aside>
+<aside class="desktop-only w-56 flex-col shrink-0 hidden border-r" style="background:var(--bg-card);border-color:var(--border)">
+  <div class="p-5 border-b" style="border-color:var(--border)">
+    <div class="flex items-center gap-2.5">
+      <img src="/static/img/logo.png" alt="Dola" class="w-8 h-8 rounded-lg" onerror="this.style.display='none'">
+      <span class="font-bold text-sm" style="color:var(--text-primary)">Doubao Console</span>
+    </div>
+  </div>
+  <nav class="flex-1 py-2">
+    <button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i"
+      :class="['sidebar-item relative w-full text-left px-5 py-2.5 text-sm flex items-center gap-3',activeTab===i?'active':'']"
+      :style="{color:activeTab===i?'var(--accent)':'var(--text-secondary)'}">
+      <span v-html="icons[i]"></span>{{tab.name}}
+    </button>
+  </nav>
+  <div class="p-4 border-t space-y-3" style="border-color:var(--border)">
+    <div class="text-center">
+      <span class="font-mono text-[10px]" style="color:var(--text-muted)">v1.4.8</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs" style="color:var(--text-muted)">
+      <span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'pulse':'']" :style="{background:session&&session.logged_in?'var(--success)':'var(--error)'}"></span>
+      {{session&&session.logged_in?'已登录':'未登录'}}
+    </div>
+    <!-- Theme toggle in sidebar -->
+    <button @click="toggleTheme" class="btn-sm w-full flex items-center justify-center gap-2">
+      <svg v-if="isDark" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      <svg v-else class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+      {{isDark?'亮色模式':'深色模式'}}
+    </button>
+    <button @click="doLogout" class="btn-sm w-full flex items-center justify-center gap-2" style="color:var(--error);border-color:var(--error)">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      退出登录
+    </button>
+  </div>
+</aside>
 
 <!-- ── Main Content ── -->
 <div class="flex-1 flex flex-col overflow-hidden" style="min-height:0">
-<header class="glass px-4 md:px-6 py-3 md:py-4 flex items-center justify-between shrink-0 safe-top">
-<div class="flex items-center gap-2 md:gap-3 min-w-0">
-<h1 class="text-base md:text-lg font-semibold text-white truncate">{{tabs[activeTab].name}}</h1>
-<span class="text-xs text-slate-600 bg-slate-800 px-1.5 py-0.5 rounded font-mono hidden md:inline">v{{sysInfo?.version||'?'}}</span>
-</div>
-<div class="flex items-center gap-2 md:gap-3 shrink-0">
-<div class="flex items-center gap-1.5">
-<span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'bg-green-400 pulse':'bg-red-400']"></span>
-<span class="text-xs hidden md:inline" :class="session&&session.logged_in?'text-green-400':'text-slate-500'">{{session&&session.logged_in?'在线':'离线'}}</span>
-</div>
-<button @click="showMobileMenu=!showMobileMenu" class="mobile-flex md:hidden text-slate-400 p-1">
-<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-</button>
-<span class="text-xs text-slate-500 hidden md:inline">{{currentTime}}</span>
-</div></header>
+
+<!-- Header -->
+<header class="px-4 md:px-6 py-3 md:py-4 flex items-center justify-between shrink-0 border-b safe-top" style="background:var(--bg-card);border-color:var(--border)">
+  <div class="flex items-center gap-2 md:gap-3 min-w-0">
+    <!-- Mobile menu button -->
+    <button @click="showMobileMenu=!showMobileMenu" class="mobile-flex md:hidden p-1" style="color:var(--text-secondary)">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <h1 class="text-base md:text-lg font-semibold truncate" style="color:var(--text-primary)">{{tabs[activeTab].name}}</h1>
+  </div>
+  <div class="flex items-center gap-2 md:gap-3 shrink-0">
+    <div class="flex items-center gap-1.5">
+      <span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'pulse':'']" :style="{background:session&&session.logged_in?'var(--success)':'var(--error)'}"></span>
+      <span class="text-xs hidden md:inline" :style="{color:session&&session.logged_in?'var(--success)':'var(--text-muted)'}">{{session&&session.logged_in?'在线':'离线'}}</span>
+    </div>
+    <!-- Theme toggle in header -->
+    <button @click="toggleTheme" class="btn-icon" :title="isDark?'切换亮色':'切换深色'">
+      <svg v-if="isDark" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+      <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+    </button>
+    <span class="text-xs hidden md:inline font-mono" style="color:var(--text-muted)">{{currentTime}}</span>
+  </div>
+</header>
 
 <!-- Mobile dropdown menu -->
-<div v-if="showMobileMenu" class="md:hidden glass mx-3 mt-2 rounded-xl p-2 flex flex-col gap-1">
-<button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i;showMobileMenu=false"
-:class="['text-left px-4 py-2.5 rounded-lg text-sm flex items-center gap-3',activeTab===i?'bg-brand-600/20 text-white':'text-slate-400']">
-<span v-html="icons[i]"></span>{{tab.name}}</button>
-<div class="border-t border-slate-700 my-1"></div>
-<div class="flex items-center justify-between px-4 py-2">
-<span class="text-xs text-slate-500">版本</span>
-<span class="text-xs text-slate-400 font-mono">v{{sysInfo?.version||'?'}}</span>
-</div>
-<div class="flex items-center justify-between px-4 py-2">
-<span class="text-xs text-slate-500">状态</span>
-<span :class="session&&session.logged_in?'text-green-400':'text-red-400'" class="text-xs">{{session&&session.logged_in?'已登录':'未登录'}}</span>
-</div>
-<button @click="doLogout" class="btn-sm mx-3 mb-1 text-center">退出登录</button>
+<div v-if="showMobileMenu" class="md:hidden mx-3 mt-2 rounded-xl p-2 flex flex-col gap-1 border" style="background:var(--bg-card);border-color:var(--border)">
+  <button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i;showMobileMenu=false"
+    :class="['text-left px-4 py-2.5 rounded-lg text-sm flex items-center gap-3',activeTab===i?'font-semibold':'']"
+    :style="{color:activeTab===i?'var(--accent)':'var(--text-secondary)',background:activeTab===i?'var(--accent-muted)':'transparent'}">
+    <span v-html="icons[i]"></span>{{tab.name}}
+  </button>
+  <div class="border-t my-1" style="border-color:var(--border)"></div>
+  <div class="flex items-center justify-between px-4 py-2">
+    <span class="text-xs" style="color:var(--text-muted)">状态</span>
+    <span class="text-xs" :style="{color:session&&session.logged_in?'var(--success)':'var(--error)'}">{{session&&session.logged_in?'已登录':'未登录'}}</span>
+  </div>
+  <button @click="toggleTheme" class="btn-sm mx-3 mb-1 flex items-center justify-center gap-2">
+    {{isDark?'亮色模式':'深色模式'}}
+  </button>
+  <button @click="doLogout" class="btn-sm mx-3 mb-1 flex items-center justify-center gap-2" style="color:var(--error);border-color:var(--error)">退出登录</button>
 </div>
 
 <!-- ── Content Area ── -->
@@ -180,364 +299,637 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:#6366f1;box-sh
 
 <!-- ═══ TAB 0: 概览 ═══ -->
 <section v-show="activeTab===0">
-<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
-<div class="metric card card-glow !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">Session</div>
-<div class="flex items-center gap-1.5"><span :class="['w-2 h-2 rounded-full',session&&session.logged_in?'bg-green-400 pulse':'bg-red-400']"></span>
-<span class="text-sm md:text-lg font-semibold" :class="session&&session.logged_in?'text-green-400':'text-red-400'">{{session&&session.logged_in?'已登录':'未登录'}}</span></div></div>
-<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">运行时长</div>
-<div class="text-sm md:text-lg font-semibold text-brand-400">{{fmtDur(sysInfo?sysInfo.uptime_seconds:0)}}</div></div>
-<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">RPM</div>
-<div class="text-sm md:text-lg font-semibold text-white">{{sysInfo?sysInfo.rpm_limit:'--'}}</div></div>
-<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">Cookies</div>
-<div class="text-sm md:text-lg font-semibold text-white">{{cookieData.total}}</div></div>
-<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">连续失败</div>
-<div class="text-sm md:text-lg font-semibold" :class="(health&&health.consecutive_failures||0)>0?'text-amber-400':'text-green-400'">{{health?(health.consecutive_failures||0):0}}</div></div>
-<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">验证码</div>
-<div class="text-sm md:text-lg font-semibold" :class="health&&health.needs_captcha?'text-red-400':'text-green-400'">{{health&&health.needs_captcha?'是':'否'}}</div></div>
-<div class="metric card !p-3 md:!p-5"><div class="text-xs text-slate-400 mb-1">CDP</div>
-<div class="text-sm md:text-lg font-semibold" :class="cdpEnabled?'text-green-400':'text-slate-500'">{{cdpEnabled?'已配置':'未配置'}}</div></div>
+
+<!-- Quick Actions -->
+<div class="flex gap-2 md:gap-3 mb-4 md:mb-6 overflow-x-auto pb-1" style="-webkit-overflow-scrolling:touch">
+  <button @click="fetchOverview" class="quick-btn shrink-0">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    <span>刷新</span>
+  </button>
+  <button @click="probeSession" :disabled="probe.loading" class="quick-btn shrink-0" :style="{opacity:probe.loading?.5:1}">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    <span>{{probe.loading?'测活中':'测活'}}</span>
+  </button>
+  <button @click="resetCaptcha" :disabled="resetCap.loading" class="quick-btn shrink-0" :style="{opacity:resetCap.loading?.5:1}">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    <span>{{resetCap.loading?'重置中':'重置验证码'}}</span>
+  </button>
+  <button @click="saveSession" :disabled="saveSes.loading" class="quick-btn shrink-0" :style="{opacity:saveSes.loading?.5:1}">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+    <span>{{saveSes.loading?'保存中':'保存Session'}}</span>
+  </button>
+  <button @click="takeScreenshot" :disabled="screenshot.loading" class="quick-btn shrink-0" :style="{opacity:screenshot.loading?.5:1}">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    <span>{{screenshot.loading?'截图中':'截图'}}</span>
+  </button>
 </div>
 
-<!-- Request stats -->
+<!-- Probe / action result feedback -->
+<div v-if="probe.result||resetCap.msg||saveSes.msg" class="card mb-4 flex flex-wrap items-center gap-3 !py-3">
+  <span v-if="probe.result" class="flex items-center gap-1.5 text-xs">
+    <span class="w-2 h-2 rounded-full" :style="{background:probe.result==='healthy'?'var(--success)':'var(--error)'}"></span>
+    <span :style="{color:probe.result==='healthy'?'var(--success)':'var(--error)'}">{{probe.result}}</span>
+    <span class="font-mono" style="color:var(--text-muted)">{{probe.ms}}ms</span>
+  </span>
+  <span v-if="resetCap.msg" class="text-xs" :style="{color:resetCap.ok?'var(--success)':'var(--error)'}">{{resetCap.msg}}</span>
+  <span v-if="saveSes.msg" class="text-xs" :style="{color:saveSes.ok?'var(--success)':'var(--error)'}">{{saveSes.msg}}</span>
+</div>
+
+<!-- Status metrics -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3 mb-4 md:mb-6">
+  <div class="card card-hover !p-3 md:!p-4">
+    <div class="metric-card">
+      <div class="metric-icon" style="background:var(--accent-muted)">
+        <svg class="w-4 h-4" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div>
+        <div class="metric-value text-base" :style="{color:session&&session.logged_in?'var(--success)':'var(--error)'}">{{session&&session.logged_in?'已登录':'未登录'}}</div>
+        <div class="metric-label">Session</div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-hover !p-3 md:!p-4">
+    <div class="metric-card">
+      <div class="metric-icon" style="background:var(--accent-muted)">
+        <svg class="w-4 h-4" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <div>
+        <div class="metric-value text-base" style="color:var(--accent)">{{fmtDur(sysInfo?sysInfo.uptime_seconds:0)}}</div>
+        <div class="metric-label">运行时长</div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-hover !p-3 md:!p-4">
+    <div class="metric-card">
+      <div class="metric-icon" style="background:var(--accent-muted)">
+        <svg class="w-4 h-4" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+      </div>
+      <div>
+        <div class="metric-value text-base">{{sysInfo?sysInfo.rpm_limit:'--'}}</div>
+        <div class="metric-label">RPM 限制</div>
+      </div>
+    </div>
+  </div>
+  <div class="card card-hover !p-3 md:!p-4">
+    <div class="metric-card">
+      <div class="metric-icon" style="background:var(--accent-muted)">
+        <svg class="w-4 h-4" style="color:var(--accent)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      </div>
+      <div>
+        <div class="metric-value text-base">{{cookieData.total}}</div>
+        <div class="metric-label">Cookies</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Health metrics row -->
+<div class="grid grid-cols-3 gap-2 md:gap-3 mb-4 md:mb-6">
+  <div class="card card-hover !p-3 md:!p-4">
+    <div class="flex items-center justify-between">
+      <div class="metric-label">连续失败</div>
+      <span class="badge" :class="(health&&health.consecutive_failures||0)>0?'badge-warning':'badge-success'">{{health?(health.consecutive_failures||0):0}}</span>
+    </div>
+  </div>
+  <div class="card card-hover !p-3 md:!p-4">
+    <div class="flex items-center justify-between">
+      <div class="metric-label">验证码</div>
+      <span class="badge" :class="health&&health.needs_captcha?'badge-error':'badge-success'">{{health&&health.needs_captcha?'需要':'无'}}</span>
+    </div>
+  </div>
+  <div class="card card-hover !p-3 md:!p-4">
+    <div class="flex items-center justify-between">
+      <div class="metric-label">CDP</div>
+      <span class="badge" :class="cdpEnabled?'badge-success':'badge-muted'">{{cdpEnabled?'已配置':'未配置'}}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Request Stats -->
 <div class="card mb-4 md:mb-6" v-if="logStats">
-<div class="flex items-center justify-between mb-3">
-<h3 class="text-sm font-medium text-slate-300">请求统计</h3>
-<button @click="fetchLogStats" class="btn-sm">刷新</button>
-</div>
-<div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-3 md:mb-4">
-<div class="metric card card-glow !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">总请求</div>
-<div class="text-xl md:text-2xl font-bold text-white">{{logStats.total}}</div></div>
-<div class="metric card !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">成功</div>
-<div class="text-xl md:text-2xl font-bold text-green-400">{{logStats.success}}</div></div>
-<div class="metric card !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">失败</div>
-<div class="text-xl md:text-2xl font-bold" :class="logStats.failed>0?'text-red-400':'text-slate-500'">{{logStats.failed}}</div></div>
-<div class="metric card !p-3 md:!p-4"><div class="text-xs text-slate-400 mb-1">成功率</div>
-<div class="text-xl md:text-2xl font-bold text-brand-400">{{logStats.success_rate}}%</div></div>
-</div>
-<div v-if="logStats.trend&&logStats.trend.length" class="mb-4">
-<div class="text-xs text-slate-400 mb-2">近 7 天趋势</div>
-<div class="flex items-end gap-1 md:gap-2 h-24 md:h-32">
-<div v-for="(d,i) in logStats.trend" :key="i" class="flex-1 flex flex-col items-center gap-1">
-<div class="w-full flex flex-col justify-end h-16 md:h-24 gap-0.5">
-<div class="w-full bg-green-500/70 rounded-t" :style="{height:logStats.trend.length?Math.max(2,(d.success/Math.max(...logStats.trend.map(x=>x.total||1)))*80)+'px':'2px'}" :title="'成功: '+d.success"></div>
-<div class="w-full bg-red-500/70 rounded-b" :style="{height:logStats.trend.length?Math.max(0,(d.failed/Math.max(...logStats.trend.map(x=>x.total||1)))*20)+'px':'0px'}" :title="'失败: '+d.failed"></div>
-</div>
-<span class="text-[10px] md:text-xs text-slate-500 font-mono">{{d.date.slice(5)}}</span>
-</div>
-</div>
-</div>
-<div v-if="logStats.top_models&&logStats.top_models.length">
-<div class="text-xs text-slate-400 mb-2">热门模型</div>
-<div class="flex flex-wrap gap-1.5 md:gap-2">
-<span v-for="m in logStats.top_models" :key="m.model" class="px-2 py-1 bg-brand-900/40 text-brand-300 text-xs rounded-full border border-brand-800/50">{{m.model}} <span class="text-slate-500 ml-1">{{m.count}}</span></span>
-</div>
-</div>
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-sm font-semibold" style="color:var(--text-primary)">请求统计</h3>
+    <button @click="fetchLogStats" class="btn-sm">刷新</button>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-4">
+    <div class="card !p-3 md:!p-4" style="background:var(--bg-elevated)">
+      <div class="metric-label mb-1">总请求</div>
+      <div class="font-mono text-2xl font-bold" style="color:var(--text-primary)">{{logStats.total}}</div>
+    </div>
+    <div class="card !p-3 md:!p-4" style="background:var(--bg-elevated)">
+      <div class="metric-label mb-1">成功</div>
+      <div class="font-mono text-2xl font-bold" style="color:var(--success)">{{logStats.success}}</div>
+    </div>
+    <div class="card !p-3 md:!p-4" style="background:var(--bg-elevated)">
+      <div class="metric-label mb-1">失败</div>
+      <div class="font-mono text-2xl font-bold" :style="{color:logStats.failed>0?'var(--error)':'var(--text-muted)'}">{{logStats.failed}}</div>
+    </div>
+    <div class="card !p-3 md:!p-4" style="background:var(--bg-elevated)">
+      <div class="metric-label mb-1">成功率</div>
+      <div class="font-mono text-2xl font-bold" style="color:var(--accent)">{{logStats.success_rate}}%</div>
+    </div>
+  </div>
+
+  <!-- 7-day trend -->
+  <div v-if="logStats.trend&&logStats.trend.length" class="mb-4">
+    <div class="metric-label mb-2">近 7 天趋势</div>
+    <div class="flex items-end gap-1 md:gap-2" style="height:120px">
+      <div v-for="(d,i) in logStats.trend" :key="i" class="flex-1 flex flex-col items-center gap-1">
+        <div class="w-full flex flex-col justify-end gap-0.5" style="height:80px">
+          <div class="w-full rounded-t" style="background:var(--success);opacity:.7" :style="{height:logStats.trend.length?Math.max(2,(d.success/Math.max(...logStats.trend.map(x=>x.total||1)))*80)+'px':'2px'}" :title="'成功: '+d.success"></div>
+          <div class="w-full rounded-b" style="background:var(--error);opacity:.7" :style="{height:logStats.trend.length?Math.max(0,(d.failed/Math.max(...logStats.trend.map(x=>x.total||1)))*20)+'px':'0px'}" :title="'失败: '+d.failed"></div>
+        </div>
+        <span class="text-[10px] font-mono" style="color:var(--text-muted)">{{d.date.slice(5)}}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top models -->
+  <div v-if="logStats.top_models&&logStats.top_models.length">
+    <div class="metric-label mb-2">热门模型</div>
+    <div class="flex flex-wrap gap-1.5 md:gap-2">
+      <span v-for="m in logStats.top_models" :key="m.model" class="badge badge-accent">{{m.model}} <span style="color:var(--text-muted);margin-left:4px">{{m.count}}</span></span>
+    </div>
+  </div>
 </div>
 
-<!-- Action buttons -->
-<div class="flex items-center gap-2 md:gap-3 mb-4 md:mb-6 flex-wrap">
-<button @click="fetchOverview" class="btn text-xs md:text-sm">刷新</button>
-<button @click="probeSession" :disabled="probe.loading" class="btn-warn text-xs md:text-sm">{{probe.loading?'测活中...':'测活'}}</button>
-<button @click="resetCaptcha" :disabled="resetCap.loading" class="btn-sm text-xs" title="VNC登录后点此初始化">{{resetCap.loading?'重置中...':'初始化Bridge'}}</button>
-<button @click="saveSession" :disabled="saveSes.loading" class="btn-sm text-xs" title="保存登录状态">{{saveSes.loading?'保存中...':'保存Session'}}</button>
-<span v-if="resetCap.msg" class="text-xs" :class="resetCap.ok?'text-green-400':'text-red-400'">{{resetCap.msg}}</span>
-<span v-if="saveSes.msg" class="text-xs" :class="saveSes.ok?'text-green-400':'text-red-400'">{{saveSes.msg}}</span>
-<span v-if="probe.result" class="text-xs md:text-sm flex items-center gap-1.5">
-<span :class="['w-2 h-2 rounded-full',probe.result==='healthy'?'bg-green-400':'bg-red-400']"></span>
-<span :class="probe.result==='healthy'?'text-green-400':'text-red-400'">{{probe.result}}</span>
-<span class="text-slate-500 ml-1">{{probe.ms}}ms</span>
-</span>
+<!-- Model Performance (from logs) -->
+<div class="card mb-4 md:mb-6" v-if="modelPerf.length">
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="text-sm font-semibold" style="color:var(--text-primary)">模型性能</h3>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>模型</th><th>请求数</th><th>成功率</th><th>平均耗时</th>
+      </tr></thead>
+      <tbody>
+        <tr v-for="m in modelPerf" :key="m.model">
+          <td><span class="badge badge-accent">{{m.model}}</span></td>
+          <td class="font-mono text-sm" style="color:var(--text-secondary)">{{m.count}}</td>
+          <td><span class="badge" :class="m.rate>=90?'badge-success':m.rate>=70?'badge-warning':'badge-error'">{{m.rate}}%</span></td>
+          <td class="font-mono text-sm" style="color:var(--text-secondary)">{{m.avgMs}}ms</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
-<!-- System config -->
+<!-- System Config (collapsible) -->
 <div class="card mb-4 md:mb-6" v-if="sysInfo">
-<h3 class="text-sm font-medium text-slate-300 mb-3">系统配置</h3>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 text-sm">
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Version</span><span class="text-slate-200 font-mono text-xs">{{sysInfo.version||'--'}}</span></div>
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Platform</span><span class="text-slate-200 font-mono text-xs truncate ml-2">{{sysInfo.platform}}</span></div>
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Python</span><span class="text-slate-200 font-mono text-xs">{{sysInfo.python_version?.split(' ')[0]}}</span></div>
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Listen</span><span class="text-slate-200 font-mono text-xs">{{sysInfo.host}}:{{sysInfo.port}}</span></div>
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Keepalive</span><span class="text-slate-200 text-xs">{{fmtDur(sysInfo.keepalive_interval)}}</span></div>
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Auth</span><span class="text-slate-200 text-xs">{{sysInfo.api_key_mode}}</span></div>
+  <div class="collapse-toggle" :class="{open:sysExpanded}" @click="sysExpanded=!sysExpanded">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <h3 class="text-sm font-semibold" style="color:var(--text-primary)">系统配置</h3>
+  </div>
+  <div v-show="sysExpanded" class="mt-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 text-sm mb-3">
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Version</span><span class="font-mono text-xs" style="color:var(--text-secondary)">{{sysInfo.version||'--'}}</span></div>
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Platform</span><span class="font-mono text-xs truncate ml-2" style="color:var(--text-secondary)">{{sysInfo.platform}}</span></div>
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Python</span><span class="font-mono text-xs" style="color:var(--text-secondary)">{{sysInfo.python_version?.split(' ')[0]}}</span></div>
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Listen</span><span class="font-mono text-xs" style="color:var(--text-secondary)">{{sysInfo.host}}:{{sysInfo.port}}</span></div>
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Keepalive</span><span class="text-xs" style="color:var(--text-secondary)">{{fmtDur(sysInfo.keepalive_interval)}}</span></div>
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Auth Mode</span><span class="text-xs" style="color:var(--text-secondary)">{{sysInfo.api_key_mode}}</span></div>
+    </div>
+    <div class="metric-label mb-2">可用模型</div>
+    <div class="flex flex-wrap gap-1.5 md:gap-2">
+      <span v-for="m in allModels" :key="m" class="badge badge-accent">{{m}}</span>
+    </div>
+  </div>
 </div>
-<h3 class="text-sm font-medium text-slate-300 mt-3 md:mt-4 mb-2">可用模型</h3>
-<div class="flex flex-wrap gap-1.5 md:gap-2">
-<span v-for="m in allModels" :key="m" class="px-2 py-1 bg-brand-900/40 text-brand-300 text-xs rounded-full border border-brand-800/50">{{m}}</span>
-</div></div>
 
-<!-- Status details -->
+<!-- Connection Status (collapsible) -->
 <div class="card mb-4 md:mb-6" v-if="session">
-<h3 class="text-sm font-medium text-slate-300 mb-3">连接状态</h3>
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 text-sm">
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Device ID</span><span class="text-slate-200 font-mono text-xs truncate ml-2">{{session.device_id||'--'}}</span></div>
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">Web ID</span><span class="text-slate-200 font-mono text-xs truncate ml-2">{{session.web_id||'--'}}</span></div>
-<div class="flex justify-between"><span class="text-slate-400 text-xs md:text-sm">最近错误</span><span class="text-slate-200 text-xs">{{health?(health.last_error_code||'无'):'--'}}</span></div>
+  <div class="collapse-toggle" :class="{open:statusExpanded}" @click="statusExpanded=!statusExpanded">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <h3 class="text-sm font-semibold" style="color:var(--text-primary)">连接状态</h3>
+  </div>
+  <div v-show="statusExpanded" class="mt-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3 text-sm">
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Device ID</span><span class="font-mono text-xs truncate ml-2" style="color:var(--text-secondary)">{{session.device_id||'--'}}</span></div>
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">Web ID</span><span class="font-mono text-xs truncate ml-2" style="color:var(--text-secondary)">{{session.web_id||'--'}}</span></div>
+      <div class="flex justify-between"><span style="color:var(--text-muted)" class="text-xs">最近错误</span><span class="text-xs" style="color:var(--text-secondary)">{{health?(health.last_error_code||'无'):'--'}}</span></div>
+    </div>
+    <div v-if="cdpEnabled" class="mt-3 p-2 rounded-lg flex items-center gap-2" style="background:var(--success-bg);border:1px solid var(--success)">
+      <span class="w-2 h-2 rounded-full pulse" style="background:var(--success)"></span>
+      <span class="text-xs" style="color:var(--success)">CDP:</span>
+      <span class="font-mono text-xs truncate" style="color:var(--text-secondary)">{{cdpUrl}}</span>
+    </div>
+  </div>
 </div>
-<div v-if="cdpEnabled" class="mt-3 p-2 rounded-lg bg-green-900/20 border border-green-800/50 text-xs text-green-300 flex items-center gap-2">
-<span class="w-2 h-2 rounded-full bg-green-400 pulse"></span>CDP: <span class="font-mono text-xs truncate">{{cdpUrl}}</span>
-</div></div>
 
 <!-- Cookie table -->
 <div class="card">
-<h3 class="text-sm font-medium text-slate-300 mb-3">Cookies 详情</h3>
-<div v-if="cookieData.cookies.length" class="overflow-x-auto -mx-2 px-2">
-<table class="w-full text-sm"><thead><tr class="text-slate-400 text-left border-b border-slate-700">
-<th class="pb-2 pr-2 md:pr-4 text-xs">#</th><th class="pb-2 pr-2 md:pr-4 text-xs">名称</th><th class="pb-2 pr-2 md:pr-4 text-xs">值</th><th class="pb-2 text-xs">长度</th></tr></thead>
-<tbody><tr v-for="(c,i) in cookieData.cookies" :key="c.name" class="border-b border-slate-800 hover:bg-slate-800/30">
-<td class="py-1.5 pr-2 md:pr-4 text-slate-500 text-xs">{{i+1}}</td>
-<td class="py-1.5 pr-2 md:pr-4 font-mono text-brand-300 whitespace-nowrap text-xs">{{c.name}}</td>
-<td class="py-1.5 pr-2 md:pr-4 font-mono text-slate-300 text-xs break-all max-w-[120px] md:max-w-md">{{c.value}}</td>
-<td class="py-1.5 text-slate-500 text-xs">{{c.length}}</td></tr></tbody></table>
-</div>
-<div v-else class="text-slate-500 text-center py-6 text-sm">暂无 Cookie 数据，请先登录</div>
+  <h3 class="text-sm font-semibold mb-3" style="color:var(--text-primary)">Cookies 详情</h3>
+  <div v-if="cookieData.cookies.length" class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>名称</th><th>值</th><th>长度</th></tr></thead>
+      <tbody>
+        <tr v-for="(c,i) in cookieData.cookies" :key="c.name">
+          <td class="font-mono text-xs" style="color:var(--text-muted)">{{i+1}}</td>
+          <td class="font-mono text-xs whitespace-nowrap" style="color:var(--accent)">{{c.name}}</td>
+          <td class="font-mono text-xs break-all" style="color:var(--text-secondary);max-width:200px">{{c.value}}</td>
+          <td class="text-xs" style="color:var(--text-muted)">{{c.length}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div v-else class="text-center py-6 text-sm" style="color:var(--text-muted)">暂无 Cookie 数据，请先登录</div>
 </div>
 </section>
 
-<!-- ═══ TAB 1: 登录 ═══ -->
+<!-- ═══ TAB 1: 扫码登录 ═══ -->
 <section v-show="activeTab===1">
 <div class="card max-w-md mx-auto text-center">
-<div v-if="!qr.img" class="py-6 md:py-8">
-<div class="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden">
-<img src="/static/img/logo.png" alt="Doubao" class="w-16 h-16 object-cover" onerror="this.style.display='none'"></div>
-<p class="text-slate-400 mb-4 text-sm">使用豆包 App 扫码登录</p>
-<button @click="startQr" class="btn">生成二维码</button></div>
-<div v-else class="py-4">
-<div class="bg-white p-2 md:p-3 rounded-xl inline-block mb-3">
-<img :src="'data:image/png;base64,'+qr.img" class="w-36 h-36 md:w-44 md:h-44"/></div>
-<p class="text-sm" :class="qrColor">{{qr.text}}</p>
-<button v-if="qr.st==='expired'||qr.st==='error'" @click="startQr" class="btn mt-4">重新生成</button>
-</div></div>
+  <div v-if="!qr.img" class="py-6 md:py-8">
+    <div class="w-16 h-16 mx-auto mb-4 rounded-2xl overflow-hidden">
+      <img src="/static/img/logo.png" alt="Dola" class="w-16 h-16 object-cover" onerror="this.style.display='none'">
+    </div>
+    <p class="mb-4 text-sm" style="color:var(--text-secondary)">使用 Dola App 扫码登录</p>
+    <button @click="startQr" class="btn">生成二维码</button>
+  </div>
+  <div v-else class="py-4">
+    <div class="p-2 md:p-3 rounded-xl inline-block mb-3" style="background:#fff">
+      <img :src="'data:image/png;base64,'+qr.img" class="w-36 h-36 md:w-44 md:h-44"/>
+    </div>
+    <p class="text-sm" :class="{'font-semibold':qr.st==='success'||qr.st==='confirmed'}" :style="{color:qr.st==='success'||qr.st==='confirmed'?'var(--success)':qr.st==='scanned'?'var(--warning)':qr.st==='expired'||qr.st==='failed'?'var(--error)':'var(--text-secondary)'}">{{qr.text}}</p>
+    <button v-if="qr.st==='expired'||qr.st==='error'" @click="startQr" class="btn mt-4">重新生成</button>
+  </div>
+</div>
 <div class="card mt-3 md:mt-4 max-w-2xl mx-auto">
-<details id="vnc-details">
-<summary class="cursor-pointer text-slate-400 text-sm hover:text-slate-200">遇到风控？使用 VNC 手动登录</summary>
-<div class="mt-3">
-<p class="text-xs text-slate-500 mb-2">如果二维码反复过期或触发验证码，请通过 noVNC 手动操作浏览器。</p>
-<button @click="loadVnc" class="btn-sm mb-2">加载 noVNC</button>
-<div id="vnc-container"></div>
-</div></details></div>
+  <details id="vnc-details">
+    <summary class="cursor-pointer text-sm hover:opacity-80" style="color:var(--text-secondary)">遇到风控？使用 VNC 手动登录</summary>
+    <div class="mt-3">
+      <p class="text-xs mb-2" style="color:var(--text-muted)">如果二维码反复过期或触发验证码，请通过 noVNC 手动操作浏览器。</p>
+      <button @click="loadVnc" class="btn-sm mb-2">加载 noVNC</button>
+      <div id="vnc-container"></div>
+    </div>
+  </details>
+</div>
 <div class="card mt-3 md:mt-4 max-w-2xl mx-auto">
-<div class="flex items-center justify-between mb-2">
-<span class="text-sm text-slate-300">浏览器截图</span>
-<button @click="takeScreenshot" class="btn-sm">{{screenshot.loading?'截图中...':'截图'}}</button></div>
-<div v-if="screenshot.img" class="mt-2">
-<img :src="screenshot.img" class="w-full rounded-lg border border-slate-700" />
-<p class="text-xs text-slate-500 mt-1">{{screenshot.time}}</p></div>
-<div v-else class="text-xs text-slate-500 text-center py-4">点击截图查看浏览器当前画面</div>
-</div></section>
+  <div class="flex items-center justify-between mb-2">
+    <span class="text-sm font-medium" style="color:var(--text-primary)">浏览器截图</span>
+    <button @click="takeScreenshot" class="btn-sm">{{screenshot.loading?'截图中...':'截图'}}</button>
+  </div>
+  <div v-if="screenshot.img" class="mt-2">
+    <img :src="screenshot.img" class="w-full rounded-lg border" style="border-color:var(--border)" />
+    <p class="text-xs mt-1" style="color:var(--text-muted)">{{screenshot.time}}</p>
+  </div>
+  <div v-else class="text-xs text-center py-4" style="color:var(--text-muted)">点击截图查看浏览器当前画面</div>
+</div>
+</section>
 
 <!-- ═══ TAB 2: 聊天测试 ═══ -->
 <section v-show="activeTab===2" class="flex flex-col" :style="{height:'calc(100dvh - 120px)'}">
 <!-- Top bar -->
-<div class="glass px-2 md:px-4 py-2 flex items-center gap-1.5 md:gap-3 flex-wrap shrink-0 border-b border-slate-800">
-<div class="flex items-center gap-1 md:gap-2">
-<label class="text-xs text-slate-400 hidden md:inline">模型</label>
-<select v-model="chat.model" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-28 md:!w-36">
-<option v-for="m in chatModels" :key="m" :value="m">{{m}}</option></select></div>
-<div class="flex items-center gap-1 md:gap-2" v-if="!chat.model.startsWith('doubao-image')&&chat.model!=='doubao-video'&&chat.model!=='doubao-music'">
-<select v-model="chat.stream" class="!py-1.5 !px-1.5 md:!px-2 text-sm">
-<option :value="true">流式</option><option :value="false">非流式</option></select></div>
-<!-- Image options -->
-<template v-if="chat.model.startsWith('doubao-image')">
-<select v-model="chat.imgModel" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-32">
-<option value="seedream-5.0-pro">5.0 Pro</option><option value="seedream-5.0-lite">5.0 Lite</option>
-<option value="seedream-4.5">4.5</option><option value="seedream-4.0">4.0</option></select>
-<select v-model="chat.imgRatio" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-36">
-<option value="1:1">1:1</option><option value="2:3">2:3</option><option value="3:4">3:4</option>
-<option value="4:3">4:3</option><option value="9:16">9:16</option><option value="16:9">16:9</option></select>
-<select v-model="chat.imgStyle" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-32">
-<option value="">风格</option><option v-for="s in imageStyles" :key="s" :value="s">{{s}}</option></select>
-</template>
-<!-- Video options -->
-<template v-if="chat.model==='doubao-video'">
-<select v-model="chat.videoRatio" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-28">
-<option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option></select>
-<select v-model="chat.videoDuration" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-16 md:!w-20">
-<option value="5">5s</option><option value="10">10s</option></select>
-</template>
-<!-- Music options -->
-<template v-if="chat.model==='doubao-music'">
-<select v-model="chat.musicGenre" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-28">
-<option value="">自动</option><option value="pop">流行</option><option value="rock">摇滚</option>
-<option value="classical">古典</option><option value="electronic">电子</option></select>
-</template>
-<button @click="clearChat" class="btn-sm text-xs ml-auto">清空</button>
+<div class="px-2 md:px-4 py-2 flex items-center gap-1.5 md:gap-3 flex-wrap shrink-0 border-b" style="background:var(--bg-card);border-color:var(--border)">
+  <div class="flex items-center gap-1 md:gap-2">
+    <label class="text-xs hidden md:inline" style="color:var(--text-muted)">模型</label>
+    <select v-model="chat.model" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-28 md:!w-36">
+      <option v-for="m in chatModels" :key="m" :value="m">{{m}}</option>
+    </select>
+  </div>
+  <div class="flex items-center gap-1 md:gap-2" v-if="!chat.model.startsWith('dola-image')&&chat.model!=='dola-video'">
+    <select v-model="chat.stream" class="!py-1.5 !px-1.5 md:!px-2 text-sm">
+      <option :value="true">流式</option><option :value="false">非流式</option>
+    </select>
+  </div>
+  <!-- Image options -->
+  <template v-if="chat.model.startsWith('dola-image')">
+    <select v-model="chat.imgModel" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-32">
+      <option value="seedream-5.0-pro">5.0 Pro</option><option value="seedream-5.0-lite">5.0 Lite</option>
+      <option value="seedream-4.5">4.5</option><option value="seedream-4.0">4.0</option>
+    </select>
+    <select v-model="chat.imgRatio" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-24 md:!w-36">
+      <option value="1:1">1:1</option><option value="2:3">2:3</option><option value="3:4">3:4</option>
+      <option value="4:3">4:3</option><option value="9:16">9:16</option><option value="16:9">16:9</option>
+    </select>
+    <select v-model="chat.imgStyle" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-32">
+      <option value="">风格</option><option v-for="s in imageStyles" :key="s" :value="s">{{s}}</option>
+    </select>
+  </template>
+  <!-- Video options -->
+  <template v-if="chat.model==='dola-video'">
+    <select v-model="chat.videoRatio" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-20 md:!w-28">
+      <option value="16:9">16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option>
+    </select>
+    <select v-model="chat.videoDuration" class="!py-1.5 !px-1.5 md:!px-2 text-sm !w-16 md:!w-20">
+      <option value="5">5s</option><option value="10">10s</option>
+    </select>
+  </template>
+  <!-- Music options -->
+  <button @click="newConversation" class="btn-sm text-xs ml-auto">新建会话</button>
+  <button @click="clearChat" class="btn-sm text-xs">清空</button>
 </div>
 <!-- Messages -->
 <div ref="chatScroll" class="flex-1 overflow-y-auto px-3 md:px-4 py-3 md:py-4 space-y-3 md:space-y-4" style="min-height:0;-webkit-overflow-scrolling:touch">
-<div v-if="!chat.messages.length" class="flex flex-col items-center justify-center h-full text-slate-600 text-xs md:text-sm gap-3">
-<img src="/static/img/logo.png" alt="Doubao" class="w-10 h-10 md:w-12 md:h-12 opacity-40 rounded-xl" onerror="this.style.display='none'">
-<span v-if="chat.model.startsWith('doubao-image')">描述要生成的图片 🖼️</span>
-<span v-else-if="chat.model==='doubao-video'">描述要生成的视频 🎬</span>
-<span v-else-if="chat.model==='doubao-music'">描述要生成的音乐 🎵</span>
-<span v-else>开始对话…</span></div>
-<div v-for="(m,i) in chat.messages" :key="i" :class="['flex',m.role==='user'?'justify-end':'justify-start']">
-<div :class="['max-w-[80%] chat-msg-max rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-sm',
-m.role==='user'?'bg-brand-600 text-white rounded-br-sm':'bg-slate-800 text-slate-200 rounded-bl-sm border border-slate-700']">
-<details v-if="m.thinking" class="mb-2 thinking-box rounded-lg p-2" :open="m.thinkOpen" @toggle="m.thinkOpen=$event.target.open">
-<summary class="cursor-pointer text-xs text-purple-300 flex items-center gap-1.5 select-none">
-<svg class="w-3 h-3 md:w-3.5 md:h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l8 6-8 6V4z"/></svg>
-思考过程 ({{m.thinking.length}} chars)</summary>
-<pre class="out text-purple-200 text-xs leading-relaxed mt-2 whitespace-pre-wrap">{{m.thinking}}</pre></details>
-<div v-if="m.searchResults" class="mb-2">
-<div class="flex items-center gap-1 md:gap-2 mb-1">
-<svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-blue-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
-<span class="text-xs text-blue-400">{{m.searchResults.summary}}</span></div></div>
-<div v-if="m.role==='assistant'" class="chat-md text-sm" v-html="renderMd(m.content)"></div>
-<div v-else class="whitespace-pre-wrap text-sm">{{m.content}}</div>
-<div v-if="m.media" class="mt-2 md:mt-3 space-y-2">
-<div v-if="m.media.images&&m.media.images.length" class="grid grid-cols-2 gap-1.5 md:gap-2">
-<div v-for="(u,j) in m.media.images" :key="'img'+j" class="relative">
-<img :src="u" class="w-full rounded-lg border border-slate-700 cursor-pointer" @click="previewImage=u" loading="lazy"/></div></div>
-<a v-for="(u,j) in (m.media.videos||[])" :key="'vid'+j" :href="u" target="_blank" class="block text-xs text-blue-300 hover:underline">🎬 视频 #{{j+1}} ⬇️</a>
-<a v-for="(u,j) in (m.media.audios||[])" :key="'aud'+j" :href="u" target="_blank" class="block text-xs text-blue-300 hover:underline">🎵 音频 #{{j+1}} ⬇️</a></div>
-<div v-if="previewImage" @click="previewImage=null" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 md:p-8 cursor-pointer">
-<img :src="previewImage" class="max-w-full max-h-full rounded-lg"/></div>
-<div class="flex items-center gap-2 mt-1 text-xs" :class="m.role==='user'?'text-brand-200/70':'text-slate-500'">
-<span>{{m.role==='user'?'你':'AI'}}</span>
-<span v-if="m.ms" class="font-mono">{{m.ms}}ms</span>
-<span v-if="m.streaming" class="inline-block w-1.5 h-3.5 bg-brand-400 pulse"></span>
-</div></div></div></div>
+  <div v-if="!chat.messages.length" class="flex flex-col items-center justify-center h-full gap-3" style="color:var(--text-muted)">
+    <img src="/static/img/logo.png" alt="Dola" class="w-10 h-10 md:w-12 md:h-12 opacity-30 rounded-xl" onerror="this.style.display='none'">
+    <span class="text-xs md:text-sm">
+      <span v-if="chat.model.startsWith('dola-image')">描述要生成的图片</span>
+      <span v-else-if="chat.model==='dola-video'">描述要生成的视频</span>
+      
+      <span v-else>开始对话</span>
+    </span>
+  </div>
+  <div v-for="(m,i) in chat.messages" :key="i" :class="['flex',m.role==='user'?'justify-end':'justify-start']">
+    <div :class="['max-w-[80%] chat-msg-max rounded-2xl px-3 md:px-4 py-2.5 md:py-3 text-sm',m.role==='user'?'rounded-br-sm':'rounded-bl-sm border']"
+      :style="m.role==='user'?{background:'var(--accent)',color:'#fff'}:{background:'var(--bg-elevated)',color:'var(--text-primary)',borderColor:'var(--border)'}">
+      <!-- Thinking -->
+      <details v-if="m.thinking" class="mb-2 thinking-box" :open="m.thinkOpen" @toggle="m.thinkOpen=$event.target.open">
+        <summary class="cursor-pointer text-xs flex items-center gap-1.5 select-none" style="color:#a78bfa">
+          <svg class="w-3 h-3 md:w-3.5 md:h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l8 6-8 6V4z"/></svg>
+          思考过程 ({{m.thinking.length}} chars)
+        </summary>
+        <pre class="out text-xs leading-relaxed mt-2 whitespace-pre-wrap" style="color:#c4b5fd">{{m.thinking}}</pre>
+      </details>
+      <!-- Search results -->
+      <div v-if="m.searchResults" class="mb-2">
+        <div class="flex items-center gap-1 md:gap-2 mb-1">
+          <svg class="w-3 h-3 md:w-3.5 md:h-3.5" style="color:var(--accent)" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <span class="text-xs" style="color:var(--accent)">{{m.searchResults.summary}}</span>
+        </div>
+      </div>
+      <!-- Content -->
+      <div v-if="m.role==='assistant'" class="chat-md text-sm" v-html="renderMd(m.content)"></div>
+      <div v-else class="whitespace-pre-wrap text-sm">
+        <div v-if="m.attachments&&m.attachments.length" class="flex flex-wrap gap-1.5 mb-1.5">
+          <img v-for="(a,j) in m.attachments.filter(x=>x.isImage)" :key="'ua'+j" :src="a.dataUrl" class="max-w-[120px] max-h-[80px] rounded" @click="previewImage=a.dataUrl"/>
+          <span v-for="(a,j) in m.attachments.filter(x=>!x.isImage)" :key="'uf'+j" class="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded" style="background:rgba(255,255,255,.2)">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            {{a.name}}
+          </span>
+        </div>
+        {{m.content}}
+      </div>
+      <!-- Media -->
+      <div v-if="m.media" class="mt-2 md:mt-3 space-y-2">
+        <div v-if="m.media.images&&m.media.images.length" class="grid grid-cols-2 gap-1.5 md:gap-2">
+          <div v-for="(u,j) in m.media.images" :key="'img'+j" class="relative">
+            <img :src="u" class="w-full rounded-lg border cursor-pointer" style="border-color:var(--border)" @click="previewImage=u" loading="lazy"/>
+          </div>
+        </div>
+        <a v-for="(u,j) in (m.media.videos||[])" :key="'vid'+j" :href="u" target="_blank" class="block text-xs" style="color:var(--accent)">视频 #{{j+1}}</a>
+        <a v-for="(u,j) in (m.media.audios||[])" :key="'aud'+j" :href="u" target="_blank" class="block text-xs" style="color:var(--accent)">音频 #{{j+1}}</a>
+      </div>
+      <!-- Image preview overlay -->
+      <div v-if="previewImage" @click="previewImage=null" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 cursor-pointer" style="background:rgba(0,0,0,.8)">
+        <img :src="previewImage" class="max-w-full max-h-full rounded-lg"/>
+      </div>
+      <!-- Meta & Actions -->
+      <div class="flex items-center gap-1.5 mt-1.5 flex-wrap" :style="{color:m.role==='user'?'rgba(255,255,255,.55)':'var(--text-muted)'}">
+        <span class="text-xs">{{m.role==='user'?'你':'AI'}}</span>
+        <span v-if="m.ts" class="text-xs font-mono">{{fmtTime(m.ts)}}</span>
+        <span v-if="m.ms" class="text-xs font-mono">{{m.ms}}ms</span>
+        <span v-if="m.streaming" class="inline-block w-1.5 h-3.5 pulse" style="background:var(--accent)"></span>
+        <!-- Action buttons (show on hover via CSS) -->
+        <div class="msg-actions ml-auto flex items-center gap-0.5">
+          <button @click="copyMsg(i)" class="msg-act-btn" title="复制">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </button>
+          <button v-if="m.role==='user'" @click="editMsg(i)" class="msg-act-btn" title="编辑">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </button>
+          <button @click="retryMsg(i)" class="msg-act-btn" title="重试">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+          <button @click="deleteMsg(i)" class="msg-act-btn" title="删除">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Input -->
-<div class="glass border-t border-slate-800 px-3 md:px-4 py-2.5 md:py-3 shrink-0 safe-bottom">
-<div v-if="chat.error" class="mb-2 p-2 bg-red-900/30 border border-red-800 rounded text-red-300 text-xs">{{chat.error}}</div>
-<div class="flex items-end gap-2">
-<textarea v-model="chat.input" @keydown="onChatKeydown" rows="2"
-class="flex-1 text-sm resize-none !py-2" :placeholder="chatPlaceholder" :disabled="chat.loading"></textarea>
-<button @click="sendChat" :disabled="!chat.input.trim()||chat.loading" class="btn self-stretch text-sm !px-4">
-<span v-if="chat.loading" class="flex items-center gap-1">
-<svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg></span>
-<span v-else>{{chat.model.startsWith('doubao-image')?'生图':chat.model==='doubao-video'?'生视频':chat.model==='doubao-music'?'生音乐':'发送'}}</span></button></div></div>
+<div class="border-t px-3 md:px-4 py-2.5 md:py-3 shrink-0 safe-bottom" style="background:var(--bg-card);border-color:var(--border)">
+  <div v-if="chat.error" class="mb-2 p-2 rounded-lg text-xs" style="background:var(--error-bg);color:var(--error);border:1px solid var(--error)">{{chat.error}}</div>
+  <!-- Session status -->
+  <div v-if="chat.conversationId" class="mb-1.5 flex items-center gap-1.5">
+    <span class="w-1.5 h-1.5 rounded-full" style="background:var(--success)"></span>
+    <span class="text-xs" style="color:var(--text-muted)">会话中</span>
+    <span class="font-mono text-xs truncate max-w-[120px]" style="color:var(--text-muted)" :title="chat.conversationId">{{chat.conversationId.slice(0,8)}}...{{chat.conversationId.slice(-4)}}</span>
+    <button @click="newConversation" class="text-xs ml-1 px-1.5 py-0.5 rounded" style="color:var(--accent);background:var(--accent-muted)" title="新建会话">新建</button>
+  </div>
+  <!-- Attachments preview -->
+  <div v-if="chat.attachments.length" class="mb-2 flex flex-wrap gap-2">
+    <div v-for="(att,i) in chat.attachments" :key="i" class="relative group rounded-lg overflow-hidden border" style="border-color:var(--border);width:64px;height:64px">
+      <img v-if="att.isImage" :src="att.dataUrl" class="w-full h-full object-cover"/>
+      <div v-else class="w-full h-full flex flex-col items-center justify-center" style="background:var(--bg-elevated)">
+        <svg class="w-5 h-5" style="color:var(--text-muted)" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span class="text-xs mt-0.5 truncate max-w-[56px]" style="color:var(--text-muted)">{{att.name}}</span>
+      </div>
+      <button @click="chat.attachments.splice(i,1)" class="absolute top-0.5 right-0.5 w-4 h-4 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style="background:var(--error);color:#fff;font-size:10px;line-height:1">&times;</button>
+    </div>
+  </div>
+  <div class="flex items-end gap-2">
+    <button v-if="canAttach" @click="pickFile" class="shrink-0 p-2 rounded-lg transition-colors" style="color:var(--text-muted)" title="上传附件（图片/文件）" :disabled="chat.loading">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+    </button>
+    <input type="file" ref="fileInput" @change="onFilePicked" multiple accept="image/*,.pdf,.txt,.doc,.docx,.csv,.md,.json" style="display:none"/>
+    <textarea v-model="chat.input" @keydown="onChatKeydown" rows="2"
+      class="flex-1 text-sm resize-none !py-2" :placeholder="chatPlaceholder" :disabled="chat.loading"></textarea>
+    <button @click="sendChat" :disabled="(!chat.input.trim()&&!chat.attachments.length)||chat.loading" class="btn self-stretch text-sm !px-4">
+      <span v-if="chat.loading" class="flex items-center gap-1">
+        <svg class="w-3.5 h-3.5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/></svg>
+      </span>
+      <span v-else>{{chat.model.startsWith('dola-image')?'生图':chat.model==='dola-video'?'生视频':'发送'}}</span>
+    </button>
+  </div>
+</div>
 </section>
 
-<!-- ═══ TAB 3: 请求日志 ═══ -->
+<!-- ═══ TAB 3: 日志 ═══ -->
 <section v-show="activeTab===3">
+
+<!-- Server Logs (collapsible, collapsed by default) -->
+<div class="card mb-4 md:mb-6">
+  <div class="collapse-toggle" :class="{open:logExpanded}" @click="logExpanded=!logExpanded">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+    <h3 class="text-sm font-semibold" style="color:var(--text-primary)">服务日志</h3>
+    <span class="text-xs ml-2" style="color:var(--text-muted)">{{serverLogs.length}} 行</span>
+    <button @click.stop="fetchServerLogs" class="ml-auto text-xs px-2 py-0.5 rounded" style="background:var(--bg-elevated);color:var(--accent)">刷新</button>
+  </div>
+  <div v-show="logExpanded" class="mt-3">
+    <pre class="text-xs font-mono overflow-x-auto overflow-y-auto max-h-64 p-3 rounded-lg" style="background:var(--bg-base);color:var(--text-secondary);border:1px solid var(--border)"><span v-for="(l,i) in serverLogs" :key="i" :style="{color:l.includes('ERROR')||l.includes('WARNING')?'var(--error)':l.includes('INFO')?'var(--text-secondary)':'var(--text-muted)'}">{{l}}
+</span></pre>
+  </div>
+</div>
+
+<!-- Request Logs -->
 <div class="card">
-<div class="flex items-center justify-between mb-3 md:mb-4">
-<span class="text-xs text-slate-400">最近 100 条 (5s 刷新)</span>
-<button @click="fetchLogs" class="btn-sm">刷新</button></div>
-<div class="overflow-x-auto -mx-2 px-2">
-<table class="w-full text-sm min-w-[480px]">
-<thead><tr class="text-left text-xs text-slate-500 border-b border-slate-700">
-<th class="py-2 px-1 md:px-3">时间</th><th class="py-2 px-1 md:px-3">方法</th><th class="py-2 px-1 md:px-3">路径</th>
-<th class="py-2 px-1 md:px-3">模型</th><th class="py-2 px-1 md:px-3">状态</th><th class="py-2 px-1 md:px-3">耗时</th></tr></thead>
-<tbody><tr v-for="(l,i) in logs" :key="i" class="border-b border-slate-800 hover:bg-slate-800/50 transition-colors">
-<td class="py-2 px-1 md:px-3 text-slate-400 font-mono text-xs">{{fmtTime(l.ts)}}</td>
-<td class="py-2 px-1 md:px-3"><span class="px-1.5 py-0.5 rounded text-xs font-medium" :class="l.method==='POST'?'bg-amber-900/40 text-amber-300':'bg-blue-900/40 text-blue-300'">{{l.method}}</span></td>
-<td class="py-2 px-1 md:px-3 font-mono text-xs text-slate-300 max-w-[100px] md:max-w-xs truncate">{{l.path}}</td>
-<td class="py-2 px-1 md:px-3 text-xs text-brand-400">{{l.model||'-'}}</td>
-<td class="py-2 px-1 md:px-3"><span :class="l.status<400?'text-green-400':'text-red-400'" class="font-mono text-xs">{{l.status}}</span></td>
-<td class="py-2 px-1 md:px-3 text-slate-400 font-mono text-xs">{{l.ms}}ms</td></tr>
-<tr v-if="!logs.length"><td colspan="6" class="py-8 text-center text-slate-500 text-sm">暂无请求记录</td></tr>
-</tbody></table></div></div></section>
+  <div class="flex items-center justify-between mb-3 md:mb-4">
+    <h3 class="text-sm font-semibold" style="color:var(--text-primary)">请求日志</h3>
+    <div class="flex items-center gap-3">
+      <span class="text-xs" style="color:var(--text-muted)">最近 100 条</span>
+      <div class="flex items-center gap-2">
+        <span class="text-xs" style="color:var(--text-muted)">实时</span>
+        <div :class="['toggle',logRealtime?'active':'']" @click="logRealtime=!logRealtime"></div>
+      </div>
+      <button @click="fetchLogs" class="btn-sm">刷新</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="min-w-[480px]">
+      <thead><tr>
+        <th>时间</th><th>方法</th><th>路径</th><th>模型</th><th>状态</th><th>耗时</th>
+      </tr></thead>
+      <tbody>
+        <tr v-for="(l,i) in logs" :key="i">
+          <td class="font-mono text-xs" style="color:var(--text-muted)">{{fmtTime(l.ts)}}</td>
+          <td><span class="badge" :class="l.method==='POST'?'badge-warning':'badge-accent'">{{l.method}}</span></td>
+          <td class="font-mono text-xs truncate" style="color:var(--text-secondary);max-width:160px">{{l.path}}</td>
+          <td class="text-xs" style="color:var(--accent)">{{l.model||'-'}}</td>
+          <td><span class="font-mono text-xs" :style="{color:l.status<400?'var(--success)':'var(--error)'}">{{l.status}}</span></td>
+          <td class="font-mono text-xs" style="color:var(--text-muted)">{{l.ms}}ms</td>
+        </tr>
+        <tr v-if="!logs.length"><td colspan="6" class="py-8 text-center text-sm" style="color:var(--text-muted)">暂无请求记录</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</section>
 
 <!-- ═══ TAB 4: API Keys ═══ -->
 <section v-show="activeTab===4">
 <div class="card mb-4 md:mb-6">
-<div class="flex items-center justify-between mb-3 md:mb-4">
-<h3 class="text-sm font-medium text-slate-300">API Keys 管理</h3>
-<button @click="keys.showCreate=!keys.showCreate" class="btn-sm">{{keys.showCreate?'取消':'创建 Key'}}</button>
-</div>
-<div v-if="keys.showCreate" class="mb-4 p-3 md:p-4 rounded-lg bg-slate-800/50 border border-slate-700">
-<div class="flex flex-col md:flex-row items-stretch md:items-end gap-2 md:gap-3">
-<div class="flex-1">
-<label class="text-xs text-slate-400 mb-1.5 block">名称</label>
-<input v-model="keys.newName" type="text" class="w-full" placeholder="例如：生产环境 / 测试">
-</div>
-<div class="w-full md:w-32">
-<label class="text-xs text-slate-400 mb-1.5 block">过期天数 (可选)</label>
-<input v-model="keys.newExpires" type="number" min="1" class="w-full" placeholder="留空=永久">
-</div>
-<button @click="createKey" :disabled="keys.loading" class="btn w-full md:w-auto">{{keys.loading?'创建中...':'创建'}}</button>
-</div>
-</div>
-<div v-if="keys.newKey" class="mb-4 p-3 md:p-4 rounded-lg bg-amber-900/20 border border-amber-700/50">
-<div class="flex items-center gap-2 mb-2">
-<svg class="w-4 h-4 text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-<span class="text-xs md:text-sm text-amber-300 font-medium">请立即复制，仅显示一次</span>
-</div>
-<div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
-<code class="flex-1 px-3 py-2 bg-slate-900 rounded text-green-400 text-xs md:text-sm font-mono break-all">{{keys.newKey.key}}</code>
-<button @click="copyKey(keys.newKey.key)" class="btn-sm shrink-0">复制</button>
-</div>
-<div class="text-xs text-slate-400 mt-2">名称: {{keys.newKey.name}}</div>
-<button @click="keys.newKey=null" class="btn-sm mt-3">我已保存</button>
-</div>
+  <div class="flex items-center justify-between mb-3 md:mb-4">
+    <h3 class="text-sm font-semibold" style="color:var(--text-primary)">API Keys 管理</h3>
+    <button @click="keys.showCreate=!keys.showCreate" class="btn-sm">{{keys.showCreate?'取消':'创建 Key'}}</button>
+  </div>
+  <!-- Create form -->
+  <div v-if="keys.showCreate" class="mb-4 p-3 md:p-4 rounded-lg border" style="background:var(--bg-elevated);border-color:var(--border)">
+    <div class="flex flex-col md:flex-row items-stretch md:items-end gap-2 md:gap-3">
+      <div class="flex-1">
+        <label class="text-xs mb-1.5 block" style="color:var(--text-muted)">名称</label>
+        <input v-model="keys.newName" type="text" class="w-full" placeholder="例如: 生产环境 / 测试">
+      </div>
+      <div class="w-full md:w-32">
+        <label class="text-xs mb-1.5 block" style="color:var(--text-muted)">过期天数 (可选)</label>
+        <input v-model="keys.newExpires" type="number" min="1" class="w-full" placeholder="留空=永久">
+      </div>
+      <button @click="createKey" :disabled="keys.loading" class="btn w-full md:w-auto">{{keys.loading?'创建中...':'创建'}}</button>
+    </div>
+  </div>
+  <!-- New key display -->
+  <div v-if="keys.newKey" class="mb-4 p-3 md:p-4 rounded-lg border" style="background:var(--warning-bg);border-color:var(--warning)">
+    <div class="flex items-center gap-2 mb-2">
+      <svg class="w-4 h-4 shrink-0" style="color:var(--warning)" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+      <span class="text-xs md:text-sm font-medium" style="color:var(--warning)">请立即复制，仅显示一次</span>
+    </div>
+    <div class="flex flex-col md:flex-row items-stretch md:items-center gap-2">
+      <code class="flex-1 px-3 py-2 rounded text-xs md:text-sm font-mono break-all" style="background:var(--bg-base);color:var(--success)">{{keys.newKey.key}}</code>
+      <button @click="copyKey(keys.newKey.key)" class="btn-sm shrink-0">复制</button>
+    </div>
+    <div class="text-xs mt-2" style="color:var(--text-muted)">名称: {{keys.newKey.name}}</div>
+    <button @click="keys.newKey=null" class="btn-sm mt-3">我已保存</button>
+  </div>
 </div>
 <!-- Key list -->
 <div class="card">
-<div class="flex items-center justify-between mb-3 md:mb-4">
-<span class="text-xs text-slate-400">共 {{keys.list.length}} 个 Key</span>
-<button @click="fetchKeys" class="btn-sm">刷新</button>
-</div>
-<div class="overflow-x-auto -mx-2 px-2">
-<table class="w-full text-sm min-w-[600px]">
-<thead><tr class="text-left text-xs text-slate-500 border-b border-slate-700">
-<th class="py-2 px-1 md:px-3">名称</th><th class="py-2 px-1 md:px-3">Key 前缀</th><th class="py-2 px-1 md:px-3">状态</th><th class="py-2 px-1 md:px-3">请求数</th><th class="py-2 px-1 md:px-3">过期时间</th><th class="py-2 px-1 md:px-3">操作</th></tr></thead>
-<tbody>
-<tr v-for="k in keys.list" :key="k.id" class="border-b border-slate-800 hover:bg-slate-800/30">
-<td class="py-2 px-1 md:px-3">
-<span class="text-slate-200 text-xs">{{k.name}}</span>
-<span v-if="k.is_primary" class="ml-1 px-1 py-0.5 rounded text-xs font-medium bg-purple-900/40 text-purple-300 border border-purple-800/50">主密钥</span>
-</td>
-<td class="py-2 px-1 md:px-3 font-mono text-xs text-brand-300">{{k.key_prefix}}</td>
-<td class="py-2 px-1 md:px-3">
-<span v-if="k.is_primary" class="px-1.5 py-0.5 rounded text-xs bg-green-900/40 text-green-300">始终有效</span>
-<span v-else-if="k.is_active" class="px-1.5 py-0.5 rounded text-xs bg-green-900/40 text-green-300">启用</span>
-<span v-else class="px-1.5 py-0.5 rounded text-xs bg-slate-700 text-slate-400">已禁用</span>
-</td>
-<td class="py-2 px-1 md:px-3 text-slate-400 font-mono text-xs">{{k.request_count===null||k.request_count===undefined?'—':k.request_count}}</td>
-<td class="py-2 px-1 md:px-3 text-slate-400 text-xs">{{k.expires_at?fmtDateTime(k.expires_at):'永久'}}</td>
-<td class="py-2 px-1 md:px-3">
-<div v-if="!k.is_primary" class="flex items-center gap-1 md:gap-2">
-<button @click="toggleKey(k.id)" class="btn-sm text-xs">{{k.is_active?'禁用':'启用'}}</button>
-<button @click="deleteKey(k.id,k.name)" class="btn-sm text-xs" style="background:#7f1d1d;color:#fecaca">删除</button>
-</div>
-<span v-else class="text-xs text-slate-600">—</span>
-</td>
-</tr>
-<tr v-if="!keys.list.length"><td colspan="6" class="py-8 text-center text-slate-500 text-sm">暂无 API Key</td></tr>
-</tbody>
-</table>
-</div>
+  <div class="flex items-center justify-between mb-3 md:mb-4">
+    <span class="text-xs" style="color:var(--text-muted)">共 {{keys.list.length}} 个 Key</span>
+    <button @click="fetchKeys" class="btn-sm">刷新</button>
+  </div>
+  <div class="table-wrap">
+    <table class="min-w-[600px]">
+      <thead><tr>
+        <th>名称</th><th>Key 前缀</th><th>状态</th><th>请求数</th><th>过期时间</th><th>操作</th>
+      </tr></thead>
+      <tbody>
+        <tr v-for="k in keys.list" :key="k.id">
+          <td>
+            <span class="text-xs" style="color:var(--text-primary)">{{k.name}}</span>
+            <span v-if="k.is_primary" class="badge badge-accent ml-1">主密钥</span>
+          </td>
+          <td class="font-mono text-xs" style="color:var(--accent)">{{k.key_prefix}}</td>
+          <td>
+            <span v-if="k.is_primary" class="badge badge-success">始终有效</span>
+            <span v-else-if="k.is_active" class="badge badge-success">启用</span>
+            <span v-else class="badge badge-muted">已禁用</span>
+          </td>
+          <td class="font-mono text-xs" style="color:var(--text-muted)">{{k.request_count===null||k.request_count===undefined?'--':k.request_count}}</td>
+          <td class="text-xs" style="color:var(--text-muted)">{{k.expires_at?fmtDateTime(k.expires_at):'永久'}}</td>
+          <td>
+            <div v-if="!k.is_primary" class="flex items-center gap-1 md:gap-2">
+              <button @click="toggleKey(k.id)" class="btn-sm text-xs">{{k.is_active?'禁用':'启用'}}</button>
+              <button @click="deleteKey(k.id,k.name)" class="btn-sm text-xs btn-danger">删除</button>
+            </div>
+            <span v-else class="text-xs" style="color:var(--text-muted)">--</span>
+          </td>
+        </tr>
+        <tr v-if="!keys.list.length"><td colspan="6" class="py-8 text-center text-sm" style="color:var(--text-muted)">暂无 API Key</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 </section>
 
 </div></div>
-</div>
+</div><!-- end main content -->
 
 <!-- ═══ Mobile Bottom TabBar ═══ -->
-<nav class="mobile-flex md:hidden glass border-t border-slate-800 shrink-0 safe-bottom" style="display:none">
-<button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i"
-:class="['tab-bar-item',activeTab===i?'active':'']">
-<span v-html="icons[i]"></span>{{tab.name}}</button>
+<nav class="mobile-flex md:hidden border-t shrink-0 safe-bottom" style="display:none;background:var(--bg-card);border-color:var(--border)">
+  <button v-for="(tab,i) in tabs" :key="i" @click="activeTab=i"
+    :class="['tab-bar-item',activeTab===i?'active':'']">
+    <span v-html="icons[i]"></span>{{tab.name}}
+  </button>
 </nav>
 
 </div></div>
 
 <script>
 const NOVNC_URL="{{NOVNC_URL}}";
-const{createApp,ref,reactive,computed,onMounted}=Vue;
+const{createApp,ref,reactive,computed,onMounted,onUnmounted,watch,nextTick}=Vue;
 createApp({setup(){
 const API=window.location.origin;
+
+/* ── Theme ── */
+const isDark=ref(true);
+function initTheme(){
+  const saved=localStorage.getItem('dola_theme');
+  if(saved){isDark.value=saved==='dark'}
+  else{isDark.value=window.matchMedia('(prefers-color-scheme:dark)').matches}
+  applyTheme();
+}
+function applyTheme(){document.documentElement.setAttribute('data-theme',isDark.value?'dark':'light')}
+function toggleTheme(){isDark.value=!isDark.value;localStorage.setItem('dola_theme',isDark.value?'dark':'light');applyTheme()}
+
+/* ── Toast ── */
+const toasts=ref([]);
+let toastId=0;
+function toast(msg,type='info'){
+  const id=++toastId;
+  toasts.value.push({id,msg,type,leaving:false});
+  setTimeout(()=>{const t=toasts.value.find(x=>x.id===id);if(t)t.leaving=true},2700);
+  setTimeout(()=>{toasts.value=toasts.value.filter(x=>x.id!==id)},3000);
+}
+
+/* ── Auth ── */
 const authed=ref(false);
 const loginPwd=ref('');
 const loginErr=ref('');
 const loginLoading=ref(false);
-const authToken=ref(localStorage.getItem('doubao_admin_token')||'');
-const apiKey=ref(localStorage.getItem('doubao_api_key')||'');
+const authToken=ref(localStorage.getItem('dola_admin_token')||'');
+const apiKey=ref(localStorage.getItem('dola_api_key')||'');
 const showMobileMenu=ref(false);
+
 function getApiHeaders(){return{'Authorization':'Bearer '+(apiKey.value||authToken.value||''),'Content-Type':'application/json'}}
 function setCookie(name,value,days){const d=new Date();d.setTime(d.getTime()+days*864e5);document.cookie=name+'='+value+';expires='+d.toUTCString()+';path=/;SameSite=Lax'}
 function delCookie(name){document.cookie=name+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'}
 function getHeaders(){return{'Authorization':'Bearer '+(authToken.value||''),'Content-Type':'application/json'}}
-const tabs=ref([{name:'概览'},{name:'登录'},{name:'聊天测试'},{name:'请求日志'},{name:'API Keys'}]);
+
+/* ── Tabs ── */
+const tabs=ref([{name:'概览'},{name:'登录'},{name:'聊天'},{name:'日志'},{name:'API Keys'}]);
 const icons=[
 '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>',
 '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>',
 '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
 '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
-'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>'];
+'<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>'
+];
 const activeTab=ref(0);
+
+/* ── State ── */
 const session=ref(null);
 const sysInfo=ref(null);
 const cookieData=reactive({cookies:[],total:0,file:null});
@@ -548,170 +940,349 @@ const qr=reactive({img:'',st:'',text:'等待生成'});
 const health=ref(null);
 const cdpUrl=ref('');
 const cdpEnabled=computed(()=>!!cdpUrl.value);
-const chat=reactive({model:'doubao-think',stream:true,input:'',loading:false,error:'',messages:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5',musicGenre:''});
-const chatModels=computed(()=>{const base=['doubao','doubao-think','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music'];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
+const screenshot=reactive({img:"",loading:false,time:""});
+const chat=reactive({model:'dola-think',stream:true,input:'',loading:false,error:'',messages:[],conversationId:null,attachments:[],imgModel:'seedream-5.0-pro',imgRatio:'1:1',imgStyle:'',videoModel:'seedance-2.0-fast',videoRatio:'16:9',videoDuration:'5'});
+const chatModels=computed(()=>{const base=['dola','dola-think','dola-expert','dola-pro','dola-image','dola-video',];const set=new Set(base);const m=sysInfo.value&&sysInfo.value.models;if(m){if(Array.isArray(m)){m.forEach(x=>set.add(x))}else if(typeof m==='object'){Object.values(m).forEach(arr=>{if(Array.isArray(arr))arr.forEach(x=>set.add(x))})}}return[...set]});
+const canAttach=computed(()=>!chat.model.startsWith('dola-image')&&chat.model!=='dola-video');
 const chatScroll=ref(null);
 const previewImage=ref(null);
-const chatPlaceholder=computed(()=>chat.model.startsWith('doubao-image')?'描述要生成的图片...':chat.model==='doubao-video'?'描述要生成的视频...':chat.model==='doubao-music'?'描述要生成的音乐...':'输入消息...');
+const chatPlaceholder=computed(()=>chat.model.startsWith('dola-image')?'描述要生成的图片...':chat.model==='dola-video'?'描述要生成的视频...':'输入消息...');
 const logs=ref([]);
 const logStats=ref(null);
-const screenshot=reactive({img:"",loading:false,time:""});
+const logRealtime=ref(true);
 const keys=reactive({list:[],loading:false,showCreate:false,newName:'',newExpires:'',newKey:null});
 const currentTime=ref('');
-const allModels=['doubao','doubao-quick','doubao-think','doubao-auto','doubao-expert','doubao-pro','doubao-image','doubao-video','doubao-music'];
+const allModels=['dola','dola-quick','dola-think','dola-auto','dola-expert','dola-pro','dola-image','dola-video',];
 const imageStyles=['人像摄影','电影写真','中国风','动漫','3D渲染','赛博朋克','CG动画','水墨画','油画','古典','水彩画','卡通','平面插画','风景','港风动漫','像素风格','荧光绘画','彩铅画','手办','儿童绘画','抽象','锐笔插画','二次元','油墨印刷','版画','莫奈','毕加索','伦勃朗','马蒂斯','巴洛克','复古动漫','绘本'];
-const qrColor=computed(()=>({'text-green-400':qr.st==='success'||qr.st==='confirmed','text-yellow-400':qr.st==='scanned','text-slate-400':qr.st==='waiting_scan','text-red-400':qr.st==='expired'||qr.st==='failed'}));
+
+/* ── Collapsible state ── */
+const sysExpanded=ref(true);
+const statusExpanded=ref(true);
+const logExpanded=ref(false);
+const serverLogs=ref([]);
+
+/* ── Model Performance (computed from logs) ── */
+const modelPerf=computed(()=>{
+  if(!logs.value.length)return[];
+  const map={};
+  logs.value.forEach(l=>{
+    if(!l.model)return;
+    if(!map[l.model])map[l.model]={model:l.model,count:0,success:0,totalMs:0};
+    map[l.model].count++;
+    if(l.status<400)map[l.model].success++;
+    map[l.model].totalMs+=l.ms||0;
+  });
+  return Object.values(map).map(m=>({...m,rate:m.count?Math.round(m.success/m.count*100):0,avgMs:m.count?Math.round(m.totalMs/m.count):0})).sort((a,b)=>b.count-a.count);
+});
+
+/* ── Utility ── */
 function fmtDur(s){if(!s&&s!==0)return'N/A';s=Math.round(s);if(s<60)return s+'s';if(s<3600)return Math.floor(s/60)+'m '+s%60+'s';const h=Math.floor(s/3600);return h+'h '+Math.floor((s%3600)/60)+'m'}
-function fmtTime(ts){if(!ts)return'';return new Date(ts*1000).toLocaleTimeString('zh-CN',{hour12:false})}
-function fmtDateTime(ts){if(!ts)return'';return new Date(ts*1000).toLocaleString('zh-CN',{hour12:false})}
-async function api(path,opts={}){const headers=opts.authMode==='apikey'?getApiHeaders():getHeaders();const{authMode,...rest}=opts;const r=await fetch(API+path,{headers,...rest});if(r.status===401){authed.value=false;localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token');throw new Error('未登录或会话已过期')}return r.json()}
-async function doLogin(){loginLoading.value=true;loginErr.value='';try{const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:loginPwd.value})});const d=await r.json().catch(()=>({}));if(!r.ok){loginErr.value=d.detail||d.error?.message||('登录失败 (HTTP '+r.status+')');return}if(d.token){authToken.value=d.token;localStorage.setItem('doubao_admin_token',d.token);setCookie('doubao_admin_token',d.token,1);if(d.api_key){apiKey.value=d.api_key;localStorage.setItem('doubao_api_key',d.api_key)}authed.value=true;loginPwd.value='';fetchOverview();fetchLogStats()}else{loginErr.value=d.detail||d.message||'登录失败'}}catch(e){loginErr.value='请求失败: '+e.message}finally{loginLoading.value=false}}
-async function doLogout(){try{await fetch(API+'/api/auth/logout',{method:'POST',headers:getHeaders()})}catch(e){}localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token');authToken.value='';apiKey.value='';localStorage.removeItem('doubao_api_key');authed.value=false;session.value=null;sysInfo.value=null;logs.value=[];logStats.value=null}
-async function checkAuth(){if(!authToken.value){authed.value=false;return}try{const r=await fetch(API+'/api/auth/status',{headers:getHeaders()});const d=await r.json();authed.value=!!d.logged_in;if(!authed.value){localStorage.removeItem('doubao_admin_token');delCookie('doubao_admin_token')}}catch(e){authed.value=false}}
+function fmtTime(ts){if(!ts)return'';const ms=ts>1e12?ts:ts*1000;return new Date(ms).toLocaleTimeString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'})}
+function fmtDateTime(ts){if(!ts)return'';const ms=ts>1e12?ts:ts*1000;return new Date(ms).toLocaleString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'})}
+
+/* ── API helper ── */
+async function api(path,opts={}){
+  const headers=opts.authMode==='apikey'?getApiHeaders():getHeaders();
+  const{authMode,...rest}=opts;
+  const r=await fetch(API+path,{headers,...rest});
+  if(r.status===401){authed.value=false;localStorage.removeItem('dola_admin_token');delCookie('dola_admin_token');throw new Error('未登录或会话已过期')}
+  return r.json();
+}
+
+/* ── Auth actions ── */
+async function doLogin(){
+  loginLoading.value=true;loginErr.value='';
+  try{
+    const r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:loginPwd.value})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){loginErr.value=d.detail||d.error?.message||('登录失败 (HTTP '+r.status+')');return}
+    if(d.token){
+      authToken.value=d.token;localStorage.setItem('dola_admin_token',d.token);setCookie('dola_admin_token',d.token,1);
+      if(d.api_key){apiKey.value=d.api_key;localStorage.setItem('dola_api_key',d.api_key)}
+      authed.value=true;loginPwd.value='';fetchOverview();fetchLogStats();toast('登录成功','success');
+    }else{loginErr.value=d.detail||d.message||'登录失败'}
+  }catch(e){loginErr.value='请求失败: '+e.message}
+  finally{loginLoading.value=false}
+}
+
+async function doLogout(){
+  try{await fetch(API+'/api/auth/logout',{method:'POST',headers:getHeaders()})}catch(e){}
+  localStorage.removeItem('dola_admin_token');delCookie('dola_admin_token');authToken.value='';apiKey.value='';localStorage.removeItem('dola_api_key');
+  authed.value=false;session.value=null;sysInfo.value=null;logs.value=[];logStats.value=null;
+  toast('已退出登录','info');
+}
+
+async function checkAuth(){
+  if(!authToken.value){authed.value=false;return}
+  try{const r=await fetch(API+'/api/auth/status',{headers:getHeaders()});const d=await r.json();authed.value=!!d.logged_in;if(!authed.value){localStorage.removeItem('dola_admin_token');delCookie('dola_admin_token')}}catch(e){authed.value=false}
+}
+
+/* ── Data fetching ── */
 async function fetchSession(){try{const d=await api('/admin/api/status');session.value={status:d.logged_in?'healthy':'not_logged_in',logged_in:d.logged_in,device_id:d.device_id,web_id:d.web_id,page_url:d.page_url,is_ready_flag:d.is_ready_flag,login_button_visible:d.login_button_visible}}catch(e){session.value={status:'error',logged_in:false}}}
 async function fetchHealth(){try{const d=await api('/health');health.value=d}catch(e){}}
 async function fetchSystem(){try{const d=await api('/admin/api/system');sysInfo.value=d;cdpUrl.value=d.cdp_url||''}catch(e){}}
+async function fetchServerLogs(){try{const d=await api('/admin/api/server-logs');serverLogs.value=d.logs||[]}catch(e){}}
 async function fetchLogStats(){try{logStats.value=await api('/admin/api/logs/stats')}catch(e){}}
-async function probeSession(){probe.loading=true;probe.result='';const t0=Date.now();
-try{const r=await api('/admin/api/probe',{method:'POST'});probe.result=r.status||'error';probe.ms=Date.now()-t0;
-probe.time=new Date().toLocaleTimeString('zh-CN',{hour12:false});session.value=r}
-catch(e){probe.result='error';probe.ms=Date.now()-t0;probe.time=new Date().toLocaleTimeString('zh-CN',{hour12:false})}
-finally{probe.loading=false}}
 async function fetchCookies(){try{const d=await api('/admin/api/cookies');cookieData.cookies=d.cookies||[];cookieData.total=d.total||0;cookieData.file=d.session_file||null}catch(e){}}
 async function fetchLogs(){try{logs.value=(await api('/admin/api/logs')).reverse()}catch(e){}}
 async function fetchKeys(){try{const d=await api('/api/keys');keys.list=d.keys||[]}catch(e){keys.list=[]}}
-async function createKey(){
-keys.loading=true;
-try{
-const body={name:keys.newName.trim()||'unnamed'};
-if(keys.newExpires&&keys.newExpires.trim()){const d=parseInt(keys.newExpires);if(d>0)body.expires_days=d}
-const r=await api('/api/keys',{method:'POST',body:JSON.stringify(body)});
-keys.newKey={key:r.key,name:r.name,id:r.id};
-keys.newName='';keys.newExpires='';keys.showCreate=false;
-fetchKeys()
-}catch(e){alert('创建失败: '+e.message)}
-finally{keys.loading=false}}
-async function deleteKey(id,name){
-if(!confirm('确认删除 Key "'+(name||id)+'" ?\n此操作不可恢复。'))return;
-try{await api('/api/keys/'+id,{method:'DELETE'});fetchKeys()}catch(e){alert('删除失败: '+e.message)}}
-async function toggleKey(id){
-try{await api('/api/keys/'+id+'/toggle',{method:'POST'});fetchKeys()}catch(e){alert('操作失败: '+e.message)}}
-function copyKey(text){
-if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>{alert('已复制到剪贴板')}).catch(()=>fallbackCopy(text))}
-else fallbackCopy(text)}
-function fallbackCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');alert('已复制到剪贴板')}catch(e){alert('复制失败，请手动复制')}document.body.removeChild(ta)}
-async function resetCaptcha(){resetCap.loading=true;resetCap.msg='';try{const r=await fetch(API+'/auth/reset_captcha',{method:'POST',headers:getHeaders()});const d=await r.json().catch(()=>({}));resetCap.ok=r.ok;resetCap.msg=d.message||d.detail||('HTTP '+r.status);if(r.ok)fetchOverview()}catch(e){resetCap.ok=false;resetCap.msg=e.message}finally{resetCap.loading=false}}
-async function saveSession(){saveSes.loading=true;saveSes.msg='';try{const r=await fetch(API+'/auth/save_session',{method:'POST',headers:getHeaders()});const d=await r.json().catch(()=>({}));saveSes.ok=r.ok;saveSes.msg=d.message||d.detail||('HTTP '+r.status)}catch(e){saveSes.ok=false;saveSes.msg=e.message}finally{saveSes.loading=false}}
 async function fetchOverview(){fetchSession();fetchSystem();fetchCookies();fetchHealth();fetchLogStats()}
+
+/* ── Actions ── */
+async function probeSession(){
+  probe.loading=true;probe.result='';const t0=Date.now();
+  try{const r=await api('/admin/api/probe',{method:'POST'});probe.result=r.status||'error';probe.ms=Date.now()-t0;probe.time=new Date().toLocaleTimeString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'});session.value=r;if(probe.result==='healthy')toast('测活成功 '+probe.ms+'ms','success');else toast('测活异常: '+probe.result,'error')}
+  catch(e){probe.result='error';probe.ms=Date.now()-t0;probe.time=new Date().toLocaleTimeString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'});toast('测活失败','error')}
+  finally{probe.loading=false}
+}
+
+async function resetCaptcha(){
+  resetCap.loading=true;resetCap.msg='';
+  try{const r=await fetch(API+'/auth/reset_captcha',{method:'POST',headers:getHeaders()});const d=await r.json().catch(()=>({}));resetCap.ok=r.ok;resetCap.msg=d.message||d.detail||('HTTP '+r.status);if(r.ok){fetchOverview();toast(resetCap.msg,'success')}else toast(resetCap.msg,'error')}
+  catch(e){resetCap.ok=false;resetCap.msg=e.message;toast(e.message,'error')}
+  finally{resetCap.loading=false}
+}
+
+async function saveSession(){
+  saveSes.loading=true;saveSes.msg='';
+  try{const r=await fetch(API+'/auth/save_session',{method:'POST',headers:getHeaders()});const d=await r.json().catch(()=>({}));saveSes.ok=r.ok;saveSes.msg=d.message||d.detail||('HTTP '+r.status);if(r.ok)toast(saveSes.msg,'success');else toast(saveSes.msg,'error')}
+  catch(e){saveSes.ok=false;saveSes.msg=e.message;toast(e.message,'error')}
+  finally{saveSes.loading=false}
+}
+
+/* ── QR Login ── */
 let qrPoll=null;
-async function startQr(){qr.img='';qr.st='';qr.text='生成中...';
-try{const r=await api('/v1/session/qr-login',{method:'POST'});
-if(r.qr_image_base64){qr.img=r.qr_image_base64;qr.st='waiting_scan';qr.text='请用豆包 App 扫码';pollQr()}
-else{qr.text='生成失败: '+(r.detail||r.error||'unknown');qr.st='error'}}catch(e){qr.text='请求失败';qr.st='error'}}
-function pollQr(){if(qrPoll)clearInterval(qrPoll);
-qrPoll=setInterval(async()=>{try{const r=await api('/v1/session/qr-login');qr.st=r.status||'';
-if(r.status==='confirmed'||r.status==='success'){clearInterval(qrPoll);qrPoll=null;qrLoginSuccess()}
-else if(r.status==='scanned')qr.text='已扫码，请在手机确认';
-else if(r.status==='expired'){qr.text='二维码已过期';clearInterval(qrPoll)}
-else if(r.status==='failed'){qr.text='登录失败: '+(r.error||'');clearInterval(qrPoll)}}catch(e){clearInterval(qrPoll)}},2000)}
-function qrLoginSuccess(){qr.text='登录成功! 3秒后跳转到概览页...';
-setTimeout(()=>{qr.text='登录成功! 2秒后跳转...';
-setTimeout(()=>{qr.text='登录成功! 1秒后跳转...';
-setTimeout(()=>{activeTab.value=0;qr.img='';qr.st='';qr.text='';fetchOverview()},1000)},1000)},1000)}
-function loadVnc(){document.getElementById('vnc-container').innerHTML='<iframe src="'+NOVNC_URL+'" style="width:100%;height:480px;border:1px solid #334155;border-radius:8px;margin-top:8px" allowfullscreen allow="fullscreen"></iframe>'}
-async function takeScreenshot(){screenshot.loading=true;try{const r=await fetch(API+'/auth/screenshot',{headers:getHeaders()});if(!r.ok)throw new Error('HTTP '+r.status);const blob=await r.blob();screenshot.img=URL.createObjectURL(blob);screenshot.time=new Date().toLocaleTimeString('zh-CN',{hour12:false})}catch(e){screenshot.img='';alert('截图失败: '+e.message)}finally{screenshot.loading=false}}
-function scrollChat(){Vue.nextTick(()=>{const el=chatScroll.value;if(el)el.scrollTop=el.scrollHeight})}
-function clearChat(){chat.messages.splice(0);chat.error=''}
+async function startQr(){
+  qr.img='';qr.st='';qr.text='生成中...';
+  try{const r=await api('/v1/session/qr-login',{method:'POST'});if(r.qr_image_base64){qr.img=r.qr_image_base64;qr.st='waiting_scan';qr.text='请用 Dola App 扫码';pollQr()}else{qr.text='生成失败: '+(r.detail||r.error||'unknown');qr.st='error'}}
+  catch(e){qr.text='请求失败';qr.st='error'}
+}
+function pollQr(){
+  if(qrPoll)clearInterval(qrPoll);
+  qrPoll=setInterval(async()=>{try{const r=await api('/v1/session/qr-login');qr.st=r.status||'';
+    if(r.status==='confirmed'||r.status==='success'){clearInterval(qrPoll);qrPoll=null;qrLoginSuccess()}
+    else if(r.status==='scanned')qr.text='已扫码，请在手机确认';
+    else if(r.status==='expired'){qr.text='二维码已过期';clearInterval(qrPoll)}
+    else if(r.status==='failed'){qr.text='登录失败: '+(r.error||'');clearInterval(qrPoll)}
+  }catch(e){clearInterval(qrPoll)}},2000);
+}
+function qrLoginSuccess(){
+  qr.text='登录成功! 3秒后跳转到概览页...';
+  setTimeout(()=>{qr.text='登录成功! 2秒后跳转...';setTimeout(()=>{qr.text='登录成功! 1秒后跳转...';setTimeout(()=>{activeTab.value=0;qr.img='';qr.st='';qr.text='';fetchOverview();toast('扫码登录成功','success')},1000)},1000)},1000);
+}
+function loadVnc(){document.getElementById('vnc-container').innerHTML='<iframe src="'+NOVNC_URL+'" style="width:100%;height:480px;border:1px solid var(--border);border-radius:8px;margin-top:8px" allowfullscreen allow="fullscreen"></iframe>'}
+
+/* ── Screenshot ── */
+async function takeScreenshot(){
+  screenshot.loading=true;
+  try{const r=await fetch(API+'/auth/screenshot',{headers:getHeaders()});if(!r.ok)throw new Error('HTTP '+r.status);const blob=await r.blob();screenshot.img=URL.createObjectURL(blob);screenshot.time=new Date().toLocaleTimeString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'});toast('截图成功','success')}
+  catch(e){screenshot.img='';toast('截图失败: '+e.message,'error')}
+  finally{screenshot.loading=false}
+}
+
+/* ── Chat ── */
+function scrollChat(){nextTick(()=>{const el=chatScroll.value;if(el)el.scrollTop=el.scrollHeight})}
+function clearChat(){chat.messages.splice(0);chat.error='';chat.attachments.splice(0);chat.conversationId=null}
+function newConversation(){chat.conversationId=null;chat.messages.splice(0);chat.error='';chat.attachments.splice(0);toast('已新建会话','success')}
+function pickFile(){const el=document.querySelector('input[type=file]');if(el)el.click()}
+function onFilePicked(e){
+  const files=Array.from(e.target.files||[]);if(!files.length)return;
+  const maxSize=10*1024*1024;
+  for(const f of files){
+    if(f.size>maxSize){toast(f.name+' 超过10MB限制','error');continue}
+    const isImage=f.type.startsWith('image/');
+    const reader=new FileReader();
+    reader.onload=(ev)=>{
+      chat.attachments.push({name:f.name,size:f.size,type:f.type,isImage,dataUrl:ev.target.result});
+    };
+    reader.readAsDataURL(f);
+  }
+  e.target.value='';
+}
+function copyMsg(i){const m=chat.messages[i];if(!m)return;const text=m.content||'';navigator.clipboard.writeText(text).then(()=>toast('已复制','success')).catch(()=>toast('复制失败','error'))}
+function editMsg(i){const m=chat.messages[i];if(!m||m.role!=='user')return;chat.input=m.content;chat.messages.splice(i);toast('已加载到输入框','success')}
+function retryMsg(i){const m=chat.messages[i];if(!m)return;if(m.role==='user'){chat.input=m.content;chat.messages.splice(i);sendChat()}else{const prevUser=chat.messages.slice(0,i).reverse().find(x=>x.role==='user');if(prevUser){chat.input=prevUser.content;chat.messages.splice(i);chat.messages.splice(chat.messages.indexOf(prevUser),1);sendChat()}else{chat.messages.splice(i);toast('找不到对应的用户消息','error')}}}
+function deleteMsg(i){if(i>=0&&i<chat.messages.length){chat.messages.splice(i,1);toast('已删除','success')}}
 function onChatKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat()}}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function renderMd(text){
-if(!text)return'';
-let t=escapeHtml(text);
-t=t.replace(/```(\w*)\n?([\s\S]*?)```/g,(m,lang,code)=>'<pre><code>'+code.replace(/\n$/,'')+'</code></pre>');
-t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
-t=t.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>');
-t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>');
-t=t.replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
-const lines=t.split('\n');const out=[];let inUl=false,inOl=false;
-for(const ln of lines){
-const ul=ln.match(/^[-*] (.+)$/);
-const ol=ln.match(/^\d+\. (.+)$/);
-if(ul){if(!inUl){out.push('<ul>');inUl=true}out.push('<li>'+ul[1]+'</li>')}
-else if(ol){if(!inOl){out.push('<ol>');inOl=true}out.push('<li>'+ol[1]+'</li>')}
-else{if(inUl){out.push('</ul>');inUl=false}if(inOl){out.push('</ol>');inOl=false}out.push(ln)}}
-if(inUl)out.push('</ul>');if(inOl)out.push('</ol>');
-t=out.join('\n');
-t=t.replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br/>');
-t=t.replace(/<p>(<h[1-3]>)/g,'$1').replace(/(<\/h[1-3]>)<\/p>/g,'$1');
-t=t.replace(/<p>(<pre>)/g,'$1').replace(/(<\/pre>)<\/p>/g,'$1');
-t=t.replace(/<p>(<ul>)/g,'$1').replace(/(<\/ul>)<\/p>/g,'$1');
-t=t.replace(/<p>(<ol>)/g,'$1').replace(/(<\/ol>)<\/p>/g,'$1');
-t=t.replace(/<p>(<blockquote>)/g,'$1').replace(/(<\/blockquote>)<\/p>/g,'$1');
-return'<p>'+t+'</p>';
+  if(!text)return'';
+  let t=escapeHtml(text);
+  t=t.replace(/```(\w*)\n?([\s\S]*?)```/g,(m,lang,code)=>'<pre><code>'+code.replace(/\n$/,'')+'</code></pre>');
+  t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
+  t=t.replace(/^### (.+)$/gm,'<h3>$1</h3>').replace(/^## (.+)$/gm,'<h2>$1</h2>').replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\*([^*]+)\*/g,'<em>$1</em>');
+  t=t.replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
+  const lines=t.split('\n');const out=[];let inUl=false,inOl=false;
+  for(const ln of lines){
+    const ul=ln.match(/^[-*] (.+)$/);const ol=ln.match(/^\d+\. (.+)$/);
+    if(ul){if(!inUl){out.push('<ul>');inUl=true}out.push('<li>'+ul[1]+'</li>')}
+    else if(ol){if(!inOl){out.push('<ol>');inOl=true}out.push('<li>'+ol[1]+'</li>')}
+    else{if(inUl){out.push('</ul>');inUl=false}if(inOl){out.push('</ol>');inOl=false}out.push(ln)}
+  }
+  if(inUl)out.push('</ul>');if(inOl)out.push('</ol>');
+  t=out.join('\n');
+  t=t.replace(/\n{2,}/g,'</p><p>').replace(/\n/g,'<br/>');
+  t=t.replace(/<p>(<h[1-3]>)/g,'$1').replace(/(<\/h[1-3]>)<\/p>/g,'$1');
+  t=t.replace(/<p>(<pre>)/g,'$1').replace(/(<\/pre>)<\/p>/g,'$1');
+  t=t.replace(/<p>(<ul>)/g,'$1').replace(/(<\/ul>)<\/p>/g,'$1');
+  t=t.replace(/<p>(<ol>)/g,'$1').replace(/(<\/ol>)<\/p>/g,'$1');
+  t=t.replace(/<p>(<blockquote>)/g,'$1').replace(/(<\/blockquote>)<\/p>/g,'$1');
+  return'<p>'+t+'</p>';
 }
 function mergeSearchResults(prev,sr){
-if(!sr)return;
-if(!prev){prev={summary:sr.summary||'搜索结果',queries:[...sr.queries||[]],results:[...sr.results||[]]};return prev}
-const newQ=(sr.queries||[]).filter(q=>!prev.queries.includes(q));prev.queries.push(...newQ);
-const exist=new Set(prev.results.map(r=>r.url));
-for(const r of(sr.results||[])){if(!exist.has(r.url)){prev.results.push(r);exist.add(r.url)}}
-prev.summary=`搜索 ${prev.queries.length} 个关键词，参考 ${prev.results.length} 篇资料`;
-return prev}
+  if(!sr)return;
+  if(!prev){prev={summary:sr.summary||'搜索结果',queries:[...sr.queries||[]],results:[...sr.results||[]]};return prev}
+  const newQ=(sr.queries||[]).filter(q=>!prev.queries.includes(q));prev.queries.push(...newQ);
+  const exist=new Set(prev.results.map(r=>r.url));
+  for(const r of(sr.results||[])){if(!exist.has(r.url)){prev.results.push(r);exist.add(r.url)}}
+  prev.summary=`搜索 ${prev.queries.length} 个关键词，参考 ${prev.results.length} 篇资料`;
+  return prev;
+}
 async function sendChat(){
-const text=chat.input.trim();if(!text||chat.loading)return;
-chat.error='';chat.input='';
-chat.messages.push({role:'user',content:text});
-const aiMsg={role:'assistant',content:'',thinking:'',thinkOpen:false,searchResults:null,media:null,ms:0,streaming:false};
-chat.messages.push(aiMsg);scrollChat();
-const t0=Date.now();aiMsg.streaming=true;
-const history=chat.messages.filter(m=>m!==aiMsg).map(m=>({role:m.role,content:m.content}));
-try{
-if(chat.model.startsWith('doubao-image')){
-aiMsg.media={images:[],videos:[],audios:[]};
-const r=await api('/v1/images/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.imgModel||chat.model,ratio:chat.imgRatio||'1:1',style:chat.imgStyle||undefined}),authMode:'apikey'});
-const imgs=Array.isArray(r.data)?r.data.map(d=>d.url||d.b64_json):(r.image_url?[r.image_url]:[]);
-if(r.data&&r.data[0]&&r.data[0].b64_json)imgs=r.data.map(d=>d.b64_json.startsWith('data:')?d.b64_json:'data:image/png;base64,'+d.b64_json);
-aiMsg.media.images=imgs;aiMsg.content='已生成 '+imgs.length+' 张图片';
-}else if(chat.model==='doubao-video'){
-aiMsg.media={images:[],videos:[],audios:[]};
-const r=await api('/v1/video/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.videoModel||chat.model,ratio:chat.videoRatio||'16:9',duration:chat.videoDuration||'5'}),authMode:'apikey'});
-const vids=r.data?r.data.map(d=>d.url||d.video_url).filter(Boolean):(r.video_url?[r.video_url]:[]);
-aiMsg.media.videos=vids;aiMsg.content='已生成 '+vids.length+' 个视频';
-}else if(chat.model==='doubao-music'){
-aiMsg.media={images:[],videos:[],audios:[]};
-const r=await api('/v1/audio/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.model,genre:chat.musicGenre||''}),authMode:'apikey'});
-const auds=r.data?r.data.map(d=>d.url||d.audio_url).filter(Boolean):(r.audio_url?[r.audio_url]:[]);
-aiMsg.media.audios=auds;aiMsg.content='已生成 '+auds.length+' 个音频';
-}else if(chat.stream){
-const resp=await fetch(API+'/v1/chat/completions',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:chat.model,messages:history,stream:true})});
-if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||e.detail||('HTTP '+resp.status))}
-const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
-while(true){const{done,value}=await reader.read();if(done)break;
-buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
-for(const line of lines){if(!line.startsWith('data: '))continue;const d=line.slice(6);
-if(d==='[DONE]')continue;try{const j=JSON.parse(d);const delta=j.choices?.[0]?.delta||{};
-if(delta.reasoning_content)aiMsg.thinking+=delta.reasoning_content;
-if(delta.search_results)aiMsg.searchResults=mergeSearchResults(aiMsg.searchResults,delta.search_results);
-if(delta.content){aiMsg.content+=delta.content;scrollChat()}}catch(e){}}}
-}else{
-const r=await (await fetch(API+'/v1/chat/completions',{method:'POST',headers:getApiHeaders(),body:JSON.stringify({model:chat.model,messages:history,stream:false})})).json();
-const msg=r.choices?.[0]?.message||{};
-aiMsg.content=msg.content||JSON.stringify(r,null,2);
-if(msg.reasoning_content)aiMsg.thinking=msg.reasoning_content;
-if(r.search_results)aiMsg.searchResults=mergeSearchResults(null,r.search_results);
+  const text=chat.input.trim();
+  const hasAtts=chat.attachments.length>0;
+  if((!text&&!hasAtts)||chat.loading)return;
+  chat.error='';chat.input='';
+  const curAtts=[...chat.attachments];chat.attachments.splice(0);
+  chat.messages.push({role:'user',content:text||'(附件)',attachments:curAtts.length?curAtts:undefined,ts:Date.now()});
+  const aiIdx=chat.messages.length;
+  chat.messages.push({role:'assistant',content:'',thinking:'',thinkOpen:false,searchResults:null,media:null,ms:0,ts:Date.now(),streaming:false});
+  const aiMsg=chat.messages[aiIdx];  // use reactive proxy, not raw object
+  scrollChat();
+  const t0=Date.now();aiMsg.streaming=true;
+  // Build messages array with attachment content parts
+  const history=[];
+  for(const m of chat.messages){
+    if(m===aiMsg)continue;
+    if(m.attachments&&m.attachments.length){
+      // Multimodal message with attachments
+      const parts=[];
+      for(const a of m.attachments){
+        if(a.isImage){parts.push({type:'image_url',image_url:{url:a.dataUrl}})}
+        else{parts.push({type:'file_url',file_url:{url:a.dataUrl,name:a.name,size:a.size}})}
+      }
+      if(m.content&&m.content!=='(附件)')parts.push({type:'text',text:m.content});
+      history.push({role:m.role,content:parts});
+    }else{
+      history.push({role:m.role,content:m.content});
+    }
+  }
+  const hasCurAtts=curAtts.length>0;
+  const useStream=chat.stream&&!hasCurAtts; // any attachment forces non-stream
+  try{
+    if(chat.model.startsWith('dola-image')){
+      aiMsg.media={images:[],videos:[],audios:[]};
+      const r=await api('/v1/images/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.imgModel||chat.model,ratio:chat.imgRatio||'1:1',style:chat.imgStyle||undefined}),authMode:'apikey'});
+      const imgs=Array.isArray(r.data)?r.data.map(d=>d.url||d.b64_json):(r.image_url?[r.image_url]:[]);
+      if(r.data&&r.data[0]&&r.data[0].b64_json)imgs.length=0,imgs.push(...r.data.map(d=>d.b64_json.startsWith('data:')?d.b64_json:'data:image/png;base64,'+d.b64_json));
+      aiMsg.media.images=imgs;aiMsg.content='已生成 '+imgs.length+' 张图片';
+    }else if(chat.model==='dola-video'){
+      aiMsg.media={images:[],videos:[],audios:[]};
+      const r=await api('/v1/video/generations',{method:'POST',body:JSON.stringify({prompt:text,model:chat.videoModel||chat.model,ratio:chat.videoRatio||'16:9',duration:chat.videoDuration||'5'}),authMode:'apikey'});
+      const vids=r.data?r.data.map(d=>d.url||d.video_url).filter(Boolean):(r.video_url?[r.video_url]:[]);
+      aiMsg.media.videos=vids;aiMsg.content='已生成 '+vids.length+' 个视频';
+    }else if(useStream){
+      const body={model:chat.model,messages:history,stream:true};
+      if(chat.conversationId)body.conversation_id=chat.conversationId;
+      const resp=await fetch(API+'/v1/chat/completions',{method:'POST',headers:getApiHeaders(),body:JSON.stringify(body)});
+      if(!resp.ok){const e=await resp.json().catch(()=>({}));throw new Error(e.error?.message||e.detail||('HTTP '+resp.status))}
+      const reader=resp.body.getReader();const dec=new TextDecoder();let buf='';
+      while(true){const{done,value}=await reader.read();if(done)break;
+        buf+=dec.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+        for(const line of lines){if(!line.startsWith('data: '))continue;const d=line.slice(6);
+          if(d==='[DONE]')continue;try{const j=JSON.parse(d);
+            // Extract conversation_id from first event
+            if(j.conversation_id&&!chat.conversationId)chat.conversationId=j.conversation_id;
+            const delta=j.choices?.[0]?.delta||{};
+            if(delta.reasoning_content)aiMsg.thinking+=delta.reasoning_content;
+            if(delta.search_results)aiMsg.searchResults=mergeSearchResults(aiMsg.searchResults,delta.search_results);
+            if(delta.content){aiMsg.content+=delta.content;scrollChat()}
+          }catch(e){}}}
+      // Also check non-delta events for conversation_id
+    }else{
+      const body={model:chat.model,messages:history,stream:false};
+      if(chat.conversationId)body.conversation_id=chat.conversationId;
+      const r=await(await fetch(API+'/v1/chat/completions',{method:'POST',headers:getApiHeaders(),body:JSON.stringify(body)})).json();
+      if(r.conversation_id&&!chat.conversationId)chat.conversationId=r.conversation_id;
+      const msg=r.choices?.[0]?.message||{};aiMsg.content=msg.content||JSON.stringify(r,null,2);
+      if(msg.reasoning_content)aiMsg.thinking=msg.reasoning_content;
+      if(r.search_results)aiMsg.searchResults=mergeSearchResults(null,r.search_results);
+    }
+    aiMsg.ms=Date.now()-t0;
+  }catch(e){aiMsg.content+='[错误] '+e.message;chat.error=e.message;toast('请求失败: '+e.message,'error')}
+  finally{aiMsg.streaming=false;scrollChat()}
 }
-aiMsg.ms=Date.now()-t0;
-}catch(e){aiMsg.content+='[错误] '+e.message;chat.error=e.message}
-finally{aiMsg.streaming=false;scrollChat()}
+
+/* ── Keys management ── */
+async function createKey(){
+  keys.loading=true;
+  try{
+    const body={name:keys.newName.trim()||'unnamed'};
+    if(keys.newExpires&&keys.newExpires.trim()){const d=parseInt(keys.newExpires);if(d>0)body.expires_days=d}
+    const r=await api('/api/keys',{method:'POST',body:JSON.stringify(body)});
+    keys.newKey={key:r.key,name:r.name,id:r.id};keys.newName='';keys.newExpires='';keys.showCreate=false;
+    fetchKeys();toast('Key 创建成功','success');
+  }catch(e){toast('创建失败: '+e.message,'error')}
+  finally{keys.loading=false}
 }
-setInterval(()=>{currentTime.value=new Date().toLocaleTimeString('zh-CN',{hour12:false})},1000);
-onMounted(async()=>{await checkAuth();if(authed.value){fetchOverview();fetchLogs();fetchKeys();currentTime.value=new Date().toLocaleTimeString('zh-CN',{hour12:false});
-setInterval(()=>{if(activeTab.value===0&&authed.value)fetchSession()},10000);
-setInterval(()=>{if(activeTab.value===0&&authed.value)fetchLogStats()},30000);
-setInterval(()=>{if(activeTab.value===3&&authed.value)fetchLogs()},5000);
-setInterval(()=>{if(activeTab.value===4&&authed.value)fetchKeys()},15000)}});
-return{tabs,icons,activeTab,authed,loginPwd,loginErr,loginLoading,showMobileMenu,session,sysInfo,health,cdpEnabled,cdpUrl,cookieData,probe,resetCap,saveSes,qr,qrColor,chat,chatModels,chatScroll,logs,logStats,allModels,imageStyles,currentTime,screenshot,keys,
-fmtDur,fmtTime,fmtDateTime,fetchOverview,probeSession,resetCaptcha,saveSession,fetchLogs,fetchLogStats,fetchKeys,createKey,deleteKey,toggleKey,copyKey,startQr,loadVnc,takeScreenshot,sendChat,clearChat,onChatKeydown,renderMd,doLogin,doLogout,chatPlaceholder,previewImage}}}).mount('#app');
+async function deleteKey(id,name){
+  if(!confirm('确认删除 Key "'+(name||id)+'" ?\n此操作不可恢复。'))return;
+  try{await api('/api/keys/'+id,{method:'DELETE'});fetchKeys();toast('Key 已删除','success')}catch(e){toast('删除失败: '+e.message,'error')}
+}
+async function toggleKey(id){
+  try{await api('/api/keys/'+id+'/toggle',{method:'POST'});fetchKeys();toast('Key 状态已切换','success')}catch(e){toast('操作失败: '+e.message,'error')}
+}
+function copyKey(text){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>toast('已复制到剪贴板','success')).catch(()=>fallbackCopy(text))}
+  else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+  try{document.execCommand('copy');toast('已复制到剪贴板','success')}catch(e){toast('复制失败，请手动复制','error')}
+  document.body.removeChild(ta);
+}
+
+/* ── Timers ── */
+let intervals=[];
+function startIntervals(){
+  intervals.push(setInterval(()=>{currentTime.value=new Date().toLocaleTimeString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'})},1000));
+  intervals.push(setInterval(()=>{if(activeTab.value===0&&authed.value)fetchSession()},10000));
+  intervals.push(setInterval(()=>{if(activeTab.value===0&&authed.value)fetchLogStats()},30000));
+  intervals.push(setInterval(()=>{if(activeTab.value===3&&authed.value){fetchLogs();if(logExpanded.value)fetchServerLogs()}},logRealtime.value?1000:5000));
+  intervals.push(setInterval(()=>{if(activeTab.value===4&&authed.value)fetchKeys()},15000));
+}
+
+/* ── Watch realtime toggle ── */
+watch(logRealtime,()=>{if(authed.value){fetchLogs()}});
+
+/* ── Lifecycle ── */
+onMounted(async()=>{
+  initTheme();
+  await checkAuth();
+  if(authed.value){
+    fetchOverview();fetchLogs();fetchKeys();
+    currentTime.value=new Date().toLocaleTimeString('zh-CN',{hour12:false,timeZone:'Asia/Shanghai'});
+    startIntervals();
+  }
+});
+
+return{
+  // State
+  isDark,toggleTheme,toasts,
+  tabs,icons,activeTab,authed,loginPwd,loginErr,loginLoading,showMobileMenu,
+  session,sysInfo,health,cdpEnabled,cdpUrl,cookieData,probe,resetCap,saveSes,
+  qr,screenshot,chat,chatModels,canAttach,chatScroll,previewImage,chatPlaceholder,
+  logs,logStats,logRealtime,keys,currentTime,allModels,imageStyles,
+  sysExpanded,statusExpanded,logExpanded,serverLogs,modelPerf,
+  // Methods
+  fmtDur,fmtTime,fmtDateTime,toast,
+  doLogin,doLogout,fetchOverview,probeSession,resetCaptcha,saveSession,fetchServerLogs,
+  fetchLogs,fetchLogStats,fetchKeys,createKey,deleteKey,toggleKey,copyKey,
+  startQr,loadVnc,takeScreenshot,
+  sendChat,clearChat,newConversation,pickFile,onFilePicked,copyMsg,editMsg,retryMsg,deleteMsg,onChatKeydown,renderMd
+};
+}}).mount('#app');
 </script>
 </body>
 </html>

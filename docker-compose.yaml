@@ -10,5 +10,7 @@ services:
       - TZ=Asia/Shanghai
       - DOUBAO_HOST=127.0.0.1
       - DOUBAO_PORT=8458
+      - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - ./data:/app/data
+      - ./doubaowebapi:/app/doubaowebapi

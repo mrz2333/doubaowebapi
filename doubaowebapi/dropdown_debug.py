@@ -1,7 +1,7 @@
-"""Diagnostic script to discover all Doubao skill buttons and their data-skill-id values.
+"""Diagnostic script to discover all Dola skill buttons and their data-skill-id values.
 
-python -m doubaowebapi.dropdown_debug
-python -m doubaowebapi.dropdown_debug
+Usage:
+    python -m doubaowebapi.dropdown_debug
 """
 
 import asyncio

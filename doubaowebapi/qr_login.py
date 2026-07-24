@@ -1,11 +1,11 @@
 """
-QR code login for Doubao.
+QR code login for Dola.
 
-QR code login for Doubao. Runs the full QR login flow
+QR code login for Dola. Runs the full QR login flow
 in a background thread and notifies callers via callbacks.
 
 Flow:
-  1. GET doubao.com → collect ttwid + base cookies
+  1. GET dola.com → collect ttwid + base cookies
   2. GET /passport/safe/csrf_token → passport_csrf_token
   3. GET /passport/web/get_qrcode → QR token + base64 PNG
   4. Poll /passport/web/check_qrconnect every 1.5s
@@ -32,7 +32,7 @@ from urllib.parse import urljoin
 logger = logging.getLogger(__name__)
 
 BASE_URL = "https://www.doubao.com"
-AID = 497858
+AID = 495671
 
 # Current Chrome version — keep in sync with client.py UA
 CHROME_VERSION = "148.0.0.0"
@@ -189,7 +189,7 @@ def _http_get(
 
 class QRLogin:
     """
-    Doubao QR code login implementation.
+    Dola QR code login implementation.
 
     Usage::
 

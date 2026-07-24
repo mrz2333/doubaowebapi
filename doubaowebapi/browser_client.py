@@ -1,4 +1,4 @@
-"""Playwright-based Doubao client with in-browser fetch.
+"""Playwright-based Dola client with in-browser fetch.
 
 Architecture:
 - Playwright: Login (QR scan via noVNC) + page session
@@ -16,13 +16,12 @@ import asyncio
 import json
 import logging
 import os
+import random
 import time
 import uuid
 from pathlib import Path
 from typing import Any, AsyncGenerator, Dict, List, Optional
 from urllib.parse import urlencode
-
-import random
 
 import httpx
 
@@ -53,7 +52,7 @@ DOUBAO_URL = "https://www.doubao.com"
 CHAT_URL = f"{DOUBAO_URL}/chat/"
 COMPLETION_URL = f"{DOUBAO_URL}/chat/completion"
 SAMANTHA_COMPLETION_URL = f"{DOUBAO_URL}/samantha/chat/completion"
-DEFAULT_BOT_ID = "7234781073513644036"
+DEFAULT_BOT_ID = "7339470689562525703"
 
 
 class BrowserClient:
@@ -79,6 +78,7 @@ class BrowserClient:
         # Stream bridge: request_id -> asyncio.Queue for SSE chunks
         self._stream_queues: Dict[str, asyncio.Queue] = {}
         self._bridge_ready: bool = False
+        self._fetch_hook_confirmed: bool = False
         # Randomized bridge name to avoid detection of custom window properties
         self._bridge_name: str = f"_rc{uuid.uuid4().hex[:6]}"
         # Queue max size to prevent unbounded memory growth
@@ -126,7 +126,7 @@ class BrowserClient:
     # ------------------------------------------------------------------
 
     async def start(self):
-        """Connect to external browser via CDP, navigate to Doubao, init httpx client."""
+        """Connect to external browser via CDP, navigate to Dola, init httpx client."""
         import os as _os
 
         cdp_url = _os.environ.get("DOUBAO_CDP_URL", "")
@@ -142,15 +142,15 @@ class BrowserClient:
                     viewport={"width": 1280, "height": 720},
                     locale="zh-CN",
                 )
-            # Find an existing Doubao page or create a new one
-            doubao_page = None
+            # Find an existing Dola page or create a new one
+            dola_page = None
             for p in self._context.pages:
-                if "doubao.com" in p.url:
-                    doubao_page = p
+                if "dola.com" in p.url or "doubao.com" in p.url:
+                    dola_page = p
                     break
-            if doubao_page:
-                self._page = doubao_page
-                log.info("Reusing existing page: %s", doubao_page.url)
+            if dola_page:
+                self._page = dola_page
+                log.info("Reusing existing page: %s", dola_page.url)
             else:
                 self._page = await self._context.new_page()
                 log.info("Navigating to %s", CHAT_URL)
@@ -328,9 +328,9 @@ class BrowserClient:
 
         - Reads the session JSON file pointed to by DOUBAO_SESSION_FILE
           (env var, retains DOUBAO_ prefix for backwards compatibility but
-          contains Doubao session data).
-        - Injects each cookie into the browser context with domain .doubao.com.
-        - Reads a sibling file ``doubao_localStorage.json`` (same directory as
+          contains Dola session data).
+        - Injects each cookie into the browser context with domain .dola.com.
+        - Reads a sibling file ``dola_localStorage.json`` (same directory as
           the session file) and injects its key/value pairs as localStorage
           on the current page.
         - Reloads the page so that the injected state takes effect before the
@@ -365,7 +365,7 @@ class BrowserClient:
                     {
                         "name": str(name),
                         "value": str(value),
-                        "domain": ".doubao.com",
+                        "domain": ".dola.com",
                         "path": "/",
                         "sameSite": "Lax",
                     }
@@ -382,7 +382,7 @@ class BrowserClient:
             log.debug("inject_session: no cookies in session file")
 
         # ── 2. Inject localStorage ──
-        ls_file = session_path.parent / "doubao_localStorage.json"
+        ls_file = session_path.parent / "dola_localStorage.json"
         if ls_file.exists():
             try:
                 ls_data = json.loads(ls_file.read_text(encoding="utf-8"))
@@ -409,9 +409,7 @@ class BrowserClient:
             except Exception as e:
                 log.warning("inject_session: failed to set localStorage: %s", e)
         else:
-            log.debug(
-                "inject_session: no doubao_localStorage.json next to session file"
-            )
+            log.debug("inject_session: no dola_localStorage.json next to session file")
 
         # ── 3. Reload so injected state takes effect ──
         try:
@@ -485,7 +483,7 @@ class BrowserClient:
         """Check if logged in by looking for login button.
 
         Looks for both the Chinese (登录) and English (Log In) variants of the
-        login button so the check works on Doubao's web UI regardless of locale.
+        login button so the check works on Dola's web UI regardless of locale.
 
         Args:
             retry_count: Number of retries if login button is still visible
@@ -542,14 +540,15 @@ class BrowserClient:
     async def _extract_params(self):
         """Extract device_id, web_id, fp from localStorage/cookies."""
         for _ in range(5):
-            params = await self._page.evaluate("""() => {
+            params = await self._page.evaluate(
+                """() => {
                 const result = {};
                 try {
                     const samWeb = JSON.parse(localStorage.getItem('samantha_web_web_id') || '{}');
                     result.device_id = samWeb.web_id || '';
                 } catch(e) {}
                 try {
-                    const tea = JSON.parse(localStorage.getItem('__tea_cache_tokens_497858') || '{}');
+                    const tea = JSON.parse(localStorage.getItem('__tea_cache_tokens_495671') || '{}');
                     result.web_id = tea.web_id || '';
                 } catch(e) {}
                 const fpCookie = document.cookie.split(';')
@@ -557,7 +556,9 @@ class BrowserClient:
                     .find(c => c.startsWith('s_v_web_id='));
                 result.fp = fpCookie ? fpCookie.split('=')[1] : '';
                 return result;
-            }""")
+            }""",
+                isolated_context=False,
+            )
             self._device_id = params.get("device_id", "")
             self._web_id = params.get("web_id", "")
             self._fp = params.get("fp", "")
@@ -573,15 +574,18 @@ class BrowserClient:
 
     async def _wait_for_signing(self):
         """Wait for bdms.frontierSign to become available (legacy, kept for upload signing)."""
-        for i in range(12):  # up to 60s
+        for i in range(18):  # up to 90s
             has_sign = await self._page.evaluate(
-                "() => typeof window.bdms?.frontierSign === 'function'"
+                "() => typeof window.bdms?.frontierSign === 'function'",
+                isolated_context=False,
             )
             if has_sign:
                 log.info("bdms.frontierSign available after %ds", (i + 1) * 5)
                 return
             await asyncio.sleep(5)
-        log.warning("bdms.frontierSign not available after 60s - signing may fail")
+        log.warning(
+            "bdms.frontierSign not available after %ds - signing may fail", (i + 1) * 5
+        )
 
     async def _setup_fetch_bridge(self):
         """Register expose_function callback for streaming data from browser to Python."""
@@ -620,15 +624,19 @@ class BrowserClient:
 
     async def _verify_fetch_hook(self):
         """Verify ByteDance's fetch interceptor is active (adds a_bogus)."""
-        for i in range(15):  # up to 30s
-            hooked = await self._page.evaluate("""() => {
+        for i in range(30):  # up to 60s
+            hooked = await self._page.evaluate(
+                """() => {
                 try {
                     const s = window.fetch.toString();
                     return !s.includes('native code');
                 } catch(e) { return false; }
-            }""")
+            }""",
+                isolated_context=False,
+            )
             if hooked:
                 log.info("Fetch hook verified active after %ds", (i + 1) * 2)
+                self._fetch_hook_confirmed = True
                 return True
             await asyncio.sleep(2)
         log.warning("Fetch hook NOT detected after 30s - requests may fail")
@@ -695,7 +703,7 @@ class BrowserClient:
                 {
                     "name": name,
                     "value": value,
-                    "domain": ".doubao.com",
+                    "domain": ".dola.com",
                     "path": "/",
                     "sameSite": "Lax",
                 }
@@ -759,8 +767,8 @@ class BrowserClient:
                 const result = {};
                 const keys = [
                     'samantha_web_web_id',
-                    '__tea_cache_tokens_497858',
-                    '__tea_cache_tokens_497858'
+                    '__tea_cache_tokens_495671',
+                    '__tea_cache_tokens_495671'
                 ];
                 for (const k of keys) {
                     const v = localStorage.getItem(k);
@@ -785,7 +793,7 @@ class BrowserClient:
             )
 
             # Write localStorage to sibling file (read by _inject_session_from_file)
-            ls_file = path.parent / "doubao_localStorage.json"
+            ls_file = path.parent / "dola_localStorage.json"
             ls_file.write_text(
                 json.dumps(ls_data, ensure_ascii=False, indent=2), encoding="utf-8"
             )
@@ -812,7 +820,9 @@ class BrowserClient:
                 # Use page.evaluate with argument passing instead of f-string
                 # interpolation to avoid JS injection / encoding issues
                 sig = await self._page.evaluate(
-                    "([qs]) => window.bdms.frontierSign(qs)", [query_string]
+                    "([qs]) => window.bdms.frontierSign(qs)",
+                    [query_string],
+                    isolated_context=False,
                 )
 
                 x_bogus = ""
@@ -838,14 +848,14 @@ class BrowserClient:
     def _build_query_params(self) -> Dict[str, str]:
         """Build the standard query parameters for API calls."""
         params = {
-            "aid": "497858",
+            "aid": "495671",
             "device_id": self._device_id or "",
             "device_platform": "web",
             "fp": self._fp or "",
             "language": "zh",
             "pc_version": "3.19.4",
             "pkg_type": "release_version",
-            "real_aid": "497858",
+            "real_aid": "495671",
             "region": "",
             "samantha_web": "1",
             "sys_region": "",
@@ -899,10 +909,35 @@ class BrowserClient:
         conversation_id: Optional[str] = None,
         bot_id: Optional[str] = None,
         use_deep_think: int = 0,
+        image_attachments: Optional[list[Dict[str, Any]]] = None,
     ) -> AsyncGenerator[Dict[str, Any], None]:
-        """Send a chat message and yield SSE events via in-browser fetch."""
+        """Send a chat message and yield SSE events via in-browser fetch.
+
+        Args:
+            image_attachments: Optional list of uploaded image metadata dicts
+                (from upload_image), each with 'uri', 'cdn_url', 'format',
+                'width', 'height' keys. Will be included as block_type:10052
+                attachment_block in the payload.
+        """
         if not self._ready:
             raise RuntimeError("Browser not ready - need login first")
+
+        # Lazy check: if fetch hook wasn't confirmed at startup, re-verify now
+        if not self._fetch_hook_confirmed:
+            try:
+                hooked = await self._page.evaluate(
+                    "() => { try { const s = window.fetch.toString(); return !s.includes('native code'); } catch(e) { return false; } }",
+                    isolated_context=False,
+                )
+                if hooked:
+                    self._fetch_hook_confirmed = True
+                    log.info("Fetch hook confirmed (lazy check) before chat request")
+                else:
+                    log.warning(
+                        "Fetch hook still not active before chat request - may fail"
+                    )
+            except Exception as e:
+                log.warning("Lazy fetch hook check failed: %s", e)
 
         need_create = conversation_id is None or conversation_id == ""
         effective_bot_id = bot_id or DEFAULT_BOT_ID
@@ -923,6 +958,49 @@ class BrowserClient:
                 {
                     "local_message_id": msg_uuid,
                     "content_block": [
+                        *(  # attachment block for images
+                            [
+                                {
+                                    "block_type": 10052,
+                                    "content": {
+                                        "attachment_block": {
+                                            "attachments": [
+                                                {
+                                                    "type": 1,
+                                                    "identifier": str(uuid.uuid4()),
+                                                    "image": {
+                                                        "uri": img.get("uri", ""),
+                                                        "url": img.get("cdn_url", ""),
+                                                        "width": int(
+                                                            img.get("width", 100) or 100
+                                                        ),
+                                                        "height": int(
+                                                            img.get("height", 100)
+                                                            or 100
+                                                        ),
+                                                        "format": img.get(
+                                                            "format", "png"
+                                                        ),
+                                                    },
+                                                    "parse_state": 1,
+                                                    "review_state": 1,
+                                                    "upload_status": 1,
+                                                    "progress": 100,
+                                                }
+                                                for img in (image_attachments or [])
+                                            ]
+                                        },
+                                        "pc_event_block": "",
+                                    },
+                                    "block_id": str(uuid.uuid4()),
+                                    "parent_id": "",
+                                    "meta_info": [],
+                                    "append_fields": [],
+                                }
+                            ]
+                            if image_attachments
+                            else []
+                        ),
                         {
                             "block_type": 10000,
                             "content": {
@@ -938,7 +1016,7 @@ class BrowserClient:
                             "parent_id": "",
                             "meta_info": [],
                             "append_fields": [],
-                        }
+                        },
                     ],
                     "message_status": 0,
                 }
@@ -987,10 +1065,17 @@ class BrowserClient:
             },
         }
 
-        # Build URL with query params (fetch hook will add a_bogus/msToken)
+        # Build URL with query params, then sign with frontierSign for a_bogus
         query_params = self._build_query_params()
-        query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
-        url = f"/chat/completion?{query_string}"
+        try:
+            signed_url = await self._sign_url("/chat/completion", query_params)
+            url = signed_url.replace("https://www.doubao.com", "")
+        except Exception as e:
+            log.warning(
+                "frontierSign failed for chat, falling back to unsigned URL: %s", e
+            )
+            query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
+            url = f"/chat/completion?{query_string}"
 
         # Request jitter: random delay (120-360ms) to mimic human behavior
         # (borrowed from robinxplorer/doubao2API)
@@ -1038,6 +1123,21 @@ class BrowserClient:
                 # Parse SSE line
                 try:
                     data = json.loads(chunk_json)
+                    # Check for Dola business errors in SSE data
+                    dola_code = data.get("code", 0)
+                    if dola_code and dola_code != 0:
+                        dola_msg = data.get("msg", "")
+                        log.warning(
+                            "Dola SSE error code=%d msg=%s", dola_code, dola_msg[:200]
+                        )
+                        yield {
+                            "error": True,
+                            "status": 429 if dola_code == 710022002 else 502,
+                            "body": f"[Error code={dola_code}: {dola_msg}]",
+                            "dola_code": dola_code,
+                        }
+                        self.record_failure(dola_code)
+                        break
                     yield data
                 except json.JSONDecodeError:
                     continue
@@ -1139,7 +1239,9 @@ class BrowserClient:
         }}
         """
         payload_json = json.dumps(payload, ensure_ascii=False)
-        await self._page.evaluate(js_code, [url, payload_json, request_id])
+        await self._page.evaluate(
+            js_code, [url, payload_json, request_id], isolated_context=False
+        )
 
     # ------------------------------------------------------------------
     # High-level chat helper
@@ -1282,7 +1384,9 @@ class BrowserClient:
         timeout_ms = int(timeout * 1000)
 
         log.info("POST %s [browser fetch, timeout=%ds]", url.split("?")[0], timeout)
-        result = await self._page.evaluate(js_code, [url, payload_json, timeout_ms])
+        result = await self._page.evaluate(
+            js_code, [url, payload_json, timeout_ms], isolated_context=False
+        )
 
         if result.get("error"):
             status = result.get("status", 0)
@@ -1455,7 +1559,7 @@ class BrowserClient:
         timeout: float = 120,
         image_model: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Generate images by driving the real Doubao web UI.
+        """Generate images by driving the real Dola web UI.
 
         The /samantha/chat/completion endpoint used by the legacy generate_image
         is deprecated (returns 504). The new /chat/completion endpoint requires
@@ -1587,14 +1691,17 @@ class BrowserClient:
     async def _discover_skills(self):
         """Log all available skill buttons on the current page for diagnostics."""
         try:
-            skills = await self._page.evaluate("""() => {
+            skills = await self._page.evaluate(
+                """() => {
                 return Array.from(document.querySelectorAll('[data-skill-id]')).map(el => ({
                     id: el.getAttribute('data-skill-id'),
                     text: (el.textContent||'').trim().slice(0, 40)
                 }));
-            }""")
+            }""",
+                isolated_context=False,
+            )
             log.info(
-                "Doubao web UI skills discovered: %s",
+                "Dola web UI skills discovered: %s",
                 json.dumps(skills, ensure_ascii=False),
             )
         except Exception as e:
@@ -1603,7 +1710,7 @@ class BrowserClient:
     async def _try_select_dropdown(self, page: Page, label: str, value: str) -> bool:
         """Best-effort attempt to open a skill dropdown and pick an option.
 
-        The Doubao web UI renders ratio/style selectors as hover/portal popovers
+        The Dola web UI renders ratio/style selectors as hover/portal popovers
         that are hard to drive programmatically. This helper tries several
         strategies but never raises — selection failure simply falls back to
         the default value.
@@ -2077,149 +2184,94 @@ class BrowserClient:
         file_data: bytes,
         filename: str,
     ) -> Dict[str, Any]:
-        """Upload a file to Doubao's storage (ByteDance TOS via ImageX proxy).
+        """Upload a file to Dola's storage via browser-native ImageX SDK.
 
-        4-step flow:
-          1. POST /alice/resource/prepare_upload -> STS credentials
-          2. GET  /top/v1?Action=ApplyImageUpload -> upload address
-          3. POST https://{tos_host}/upload/v1/{store_uri} -> upload binary
-          4. POST /top/v1?Action=CommitImageUpload -> confirm
+        Instead of using prepare_upload (which returns 710010703 on dola.com),
+        we trigger the Dola frontend's own upload flow by setting the file
+        input and capturing the resulting StoreUri from the ApplyImageUpload
+        response. The frontend handles ApplyImageUpload → TOS upload →
+        CommitImageUpload automatically.
 
         Returns:
             Dict with uri, name, size, file_type.
         """
-        import hashlib
-        import hmac as hmac_mod
-        import zlib
-        from datetime import datetime, timezone
-        from urllib.parse import parse_qs, urlparse
-        from urllib.parse import quote as url_quote
-
         if not self._ready:
             raise RuntimeError("Browser not ready - need login first")
 
         ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
         file_size = len(file_data)
-        crc32 = format(zlib.crc32(file_data) & 0xFFFFFFFF, "08x")
 
-        query_params = self._build_query_params()
-        signed_url = await self._sign_url(
-            f"{DOUBAO_URL}/alice/resource/prepare_upload", query_params
-        )
-        cookie_str = await self._get_cookies_string()
-        headers = self._build_headers(cookie_str)
+        # Capture StoreUri from the browser's ApplyImageUpload response
+        store_uris: list[str] = []
 
-        # Step 1: prepare_upload
-        resp = await self._http.post(
-            signed_url,
-            headers=headers,
-            json={"tenant_id": "5", "scene_id": "5", "resource_type": 1},
-            timeout=30,
-        )
-        body = resp.json()
-        if body.get("code") != 0:
-            raise RuntimeError(f"prepare_upload failed: {body.get('msg', body)}")
-        data = body["data"]
-        service_id = data["service_id"]
-        auth_token = data["upload_auth_token"]
-        ak = auth_token["access_key"]
-        sk = auth_token["secret_key"]
-        st = auth_token["session_token"]
+        async def _capture_uri(response):
+            if "ApplyImageUpload" in response.url:
+                try:
+                    body = await response.json()
+                    infos = (
+                        body.get("Result", {})
+                        .get("UploadAddress", {})
+                        .get("StoreInfos", [])
+                    )
+                    for si in infos:
+                        uri = si.get("StoreUri", "")
+                        if uri:
+                            store_uris.append(uri)
+                except Exception:
+                    pass
 
-        # AWS V4 signing helper
-        def _aws_sign_v4(method, url, req_body):
-            parsed = urlparse(url)
-            host = parsed.hostname or ""
-            path = parsed.path or "/"
-            now = datetime.now(timezone.utc)
-            amz_date = now.strftime("%Y%m%dT%H%M%SZ")
-            date_stamp = now.strftime("%Y%m%d")
-            qparams = parse_qs(parsed.query, keep_blank_values=True)
-            sorted_qp = sorted((k, v[0] if v else "") for k, v in qparams.items())
-            canonical_qs = "&".join(
-                f"{url_quote(k, safe='~')}={url_quote(v, safe='~')}"
-                for k, v in sorted_qp
+        self._page.on("response", _capture_uri)
+        try:
+            # Write the file data to a temp file inside the container,
+            # then use patchright's set_input_files which triggers the
+            # native <input type="file"> change event.  This is more
+            # reliable than the React __reactProps hack because Dola's
+            # frontend listens for the real 'change' event to start the
+            # ApplyImageUpload → TOS → CommitImageUpload flow.
+            import os
+            import tempfile
+
+            tmp = tempfile.NamedTemporaryFile(
+                suffix=f".{ext}", delete=False, dir="/tmp"
             )
-            h2s = {"host": host, "x-amz-date": amz_date}
-            if st:
-                h2s["x-amz-security-token"] = st
-            signed_h = ";".join(sorted(h2s.keys()))
-            canonical_h = "".join(f"{k}:{v}\n" for k, v in sorted(h2s.items()))
-            body_b = req_body if isinstance(req_body, bytes) else req_body.encode()
-            payload_hash = hashlib.sha256(body_b).hexdigest()
-            cr = f"{method}\n{path}\n{canonical_qs}\n{canonical_h}\n{signed_h}\n{payload_hash}"
-            scope = f"{date_stamp}/cn-north-1/imagex/aws4_request"
-            cr_hash = hashlib.sha256(cr.encode()).hexdigest()
-            sts = f"AWS4-HMAC-SHA256\n{amz_date}\n{scope}\n{cr_hash}"
+            tmp.write(file_data)
+            tmp.close()
 
-            def _s(key, msg):
-                return hmac_mod.new(key, msg.encode("utf-8"), hashlib.sha256).digest()
+            try:
+                file_input = self._page.locator('input[type="file"]').first
+                await file_input.set_input_files(tmp.name)
+            finally:
+                os.unlink(tmp.name)
 
-            k_d = _s(f"AWS4{sk}".encode("utf-8"), date_stamp)
-            k_r = _s(k_d, "cn-north-1")
-            k_sv = _s(k_r, "imagex")
-            k_sg = _s(k_sv, "aws4_request")
-            sig = hmac_mod.new(k_sg, sts.encode("utf-8"), hashlib.sha256).hexdigest()
-            auth_str = f"AWS4-HMAC-SHA256 Credential={ak}/{scope}, SignedHeaders={signed_h}, Signature={sig}"
-            result = {
-                "Authorization": auth_str,
-                "x-amz-date": amz_date,
-                "x-amz-content-sha256": payload_hash,
-            }
-            if st:
-                result["x-amz-security-token"] = st
-            return result
+            # Wait for the upload to complete (frontend does 3 HTTP calls)
+            for _ in range(30):
+                await asyncio.sleep(0.5)
+                if store_uris:
+                    break
 
-        # Step 2: ApplyImageUpload
-        file_ext = f".{ext}" if ext else ""
-        apply_url = (
-            f"{DOUBAO_URL}/top/v1?"
-            f"Action=ApplyImageUpload&Version=2018-08-01"
-            f"&ServiceId={service_id}&NeedFallback=true"
-            f"&FileSize={file_size}&FileExtension={file_ext}"
-            f"&s=jdnfglwfkl"
-        )
-        sign_h = _aws_sign_v4("GET", apply_url, "")
-        sign_h["Cookie"] = cookie_str
-        resp = await self._http.get(apply_url, headers=sign_h, timeout=30)
-        result_data = resp.json().get("Result")
-        if not result_data:
-            raise RuntimeError(f"ApplyImageUpload failed: {resp.json()}")
-        upload_addr = result_data["UploadAddress"]
-        store_info = upload_addr["StoreInfos"][0]
-        store_uri = store_info["StoreUri"]
-        tos_auth = store_info["Auth"]
-        session_key = upload_addr["SessionKey"]
-        upload_hosts = upload_addr.get("UploadHosts", [])
+            if not store_uris:
+                raise RuntimeError("File upload timed out - no StoreUri received")
 
-        # Step 3: Upload binary to TOS
-        tos_host = upload_hosts[0] if upload_hosts else "tos-mya2lf.vodupload.com"
-        upload_url = f"https://{tos_host}/upload/v1/{store_uri}"
-        resp = await self._http.post(
-            upload_url,
-            content=file_data,
-            headers={"Authorization": tos_auth, "Content-CRC32": crc32},
-            timeout=120,
-        )
-        tos_resp = resp.json()
-        if tos_resp.get("code") != 2000:
-            raise RuntimeError(f"TOS upload failed: {tos_resp}")
+            # Clear the pending attachment from Dola's UI to prevent it
+            # being sent as a message on the next user interaction
+            try:
+                await self._page.evaluate("""() => {
+                    // Find and click any remove/close buttons on pending attachments
+                    const btns = document.querySelectorAll('[class*="remove"], [class*="close"], [class*="delete"]');
+                    for (const btn of btns) {
+                        if (btn.offsetParent !== null) btn.click();
+                    }
+                    // Also try clearing the textarea to dismiss any upload UI
+                    const ta = document.querySelector('textarea');
+                    if (ta) { ta.value = ''; ta.dispatchEvent(new Event('input', {bubbles:true})); }
+                }""")
+            except Exception:
+                pass
+        finally:
+            self._page.remove_listener("response", _capture_uri)
 
-        # Step 4: CommitImageUpload
-        commit_url = f"{DOUBAO_URL}/top/v1?Action=CommitImageUpload&Version=2018-08-01&ServiceId={service_id}"
-        commit_body = json.dumps({"SessionKey": session_key})
-        sign_h2 = _aws_sign_v4("POST", commit_url, commit_body)
-        sign_h2["Content-Type"] = "application/json"
-        sign_h2["Cookie"] = cookie_str
-        resp = await self._http.post(
-            commit_url, content=commit_body, headers=sign_h2, timeout=30
-        )
-        body = resp.json()
-        results = body.get("Result", {}).get("Results", [])
-        if not results or results[0].get("UriStatus") != 2000:
-            raise RuntimeError(f"CommitImageUpload failed: {body}")
-
-        log.info("File uploaded: %s -> %s", filename, store_uri)
+        store_uri = store_uris[0]
+        log.info("File uploaded via browser: %s -> %s", filename, store_uri)
         return {"uri": store_uri, "name": filename, "size": file_size, "file_type": ext}
 
     async def get_file_download_url(
@@ -2265,69 +2317,77 @@ class BrowserClient:
         image_bytes: bytes,
         filename: str = "image.png",
     ) -> Dict[str, Any]:
-        """Upload an image and return metadata usable by chat/image generation."""
+        """Upload an image via browser-native ImageX SDK for vision.
+
+        Uses the same browser-native upload path as the Dola frontend:
+        triggers file input → ApplyImageUpload → TOS upload → CommitImageUpload.
+        This produces ``tos-mya-i-*`` URIs that the chat/completion API recognises,
+        unlike the legacy ``/samantha/pages/upload_image`` endpoint which returns
+        ``pages_upload_image_*`` URIs that Dola's model cannot see.
+
+        Returns dict with: uri, cdn_url, format, width, height.
+        """
         if not self._ready:
             raise RuntimeError("Browser not ready - need login first")
+
         ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else "png"
-        query_params = self._build_query_params()
-        signed_url = await self._sign_url(
-            f"{DOUBAO_URL}/samantha/pages/upload_image", query_params
-        )
-        cookie_str = await self._get_cookies_string()
-        headers = self._build_headers(cookie_str)
-        headers.pop("Content-Type", None)
-        files = {
-            "data": (filename, image_bytes, f"image/{ext}"),
-            "file_type": (None, ext),
-        }
-        resp = await self._http.post(
-            signed_url, headers=headers, files=files, timeout=60
-        )
-        if resp.status_code != 200:
-            raise RuntimeError(
-                f"Image upload failed ({resp.status_code}): {resp.text[:500]}"
-            )
-        body = resp.json()
-        if body.get("code") != 0:
-            raise RuntimeError(f"Image upload error: {body.get('msg', body)}")
-        uri = body.get("data", {}).get("uri", "")
+
+        # Determine image dimensions from bytes
+        width, height = 100, 100
+        try:
+            import io as _io
+
+            from PIL import Image as _PILImage
+
+            img = _PILImage.open(_io.BytesIO(image_bytes))
+            width, height = img.size
+        except Exception:
+            pass  # fallback to defaults
+
+        # Reuse upload_file (browser-native ImageX path)
+        upload_result = await self.upload_file(image_bytes, filename)
+        uri = upload_result.get("uri", "")
         if not uri:
-            raise RuntimeError(f"Image upload returned no uri: {body}")
-        query_params = self._build_query_params()
-        file_url = await self._sign_url(
-            f"{DOUBAO_URL}/alice/message/get_file_url", query_params
-        )
-        cookie_str = await self._get_cookies_string()
-        headers = self._build_headers(cookie_str)
-        resp = await self._http.post(
-            file_url,
-            headers=headers,
-            json={
-                "uris": [uri],
-                "type": "image",
-                "format": ext,
-                "expire_second": 3600,
-            },
-            timeout=30,
-        )
-        if resp.status_code != 200:
             raise RuntimeError(
-                f"get_file_url failed ({resp.status_code}): {resp.text[:500]}"
+                f"Image upload via browser returned no uri: {upload_result}"
             )
-        body = resp.json()
-        if body.get("code") != 0:
-            raise RuntimeError(f"get_file_url error: {body.get('msg', body)}")
-        file_urls = body.get("data", {}).get("file_urls", [])
-        if not file_urls:
-            raise RuntimeError("get_file_url returned no file_urls")
-        info = file_urls[0]
+
+        # Get CDN URL via get_file_url
+        cdn_url = ""
+        try:
+            query_params2 = self._build_query_params()
+            file_url = await self._sign_url(
+                f"{DOUBAO_URL}/alice/message/get_file_url", query_params2
+            )
+            cookie_str = await self._get_cookies_string()
+            headers = self._build_headers(cookie_str)
+            resp = await self._http.post(
+                file_url,
+                headers=headers,
+                json={
+                    "uris": [uri],
+                    "type": "image",
+                    "format": ext,
+                    "expire_second": 3600,
+                },
+                timeout=30,
+            )
+            if resp.status_code == 200:
+                fb = resp.json()
+                if fb.get("code") == 0:
+                    file_urls = fb.get("data", {}).get("file_urls", [])
+                    if file_urls:
+                        cdn_url = file_urls[0].get("main_url", "")
+        except Exception as e:
+            log.warning("get_file_url failed for image %s: %s", uri, e)
+
         return {
-            "uri": info.get("uri", uri),
-            "cdn_url": info.get("main_url", ""),
+            "uri": uri,
+            "cdn_url": cdn_url,
             "name": filename,
             "format": ext,
-            "width": "64",
-            "height": "64",
+            "width": width,
+            "height": height,
         }
 
     async def chat_with_file(
@@ -2471,8 +2531,13 @@ class BrowserClient:
         }
 
         query_params = self._build_query_params()
-        query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
-        url = f"/chat/completion?{query_string}"
+        try:
+            signed_url = await self._sign_url("/chat/completion", query_params)
+            url = signed_url.replace("https://www.doubao.com", "")
+        except Exception as e:
+            log.warning("frontierSign failed for chat_with_file, falling back: %s", e)
+            query_string = "&".join(f"{k}={v}" for k, v in sorted(query_params.items()))
+            url = f"/chat/completion?{query_string}"
 
         # Use browser fetch (non-streaming, collect full response)
         js_code = """
@@ -2500,7 +2565,9 @@ class BrowserClient:
         """
         payload_json = json.dumps(payload, ensure_ascii=False)
         log.info("POST /chat/completion [chat_with_file, browser fetch]")
-        result = await self._page.evaluate(js_code, [url, payload_json])
+        result = await self._page.evaluate(
+            js_code, [url, payload_json], isolated_context=False
+        )
 
         if result.get("error"):
             raise RuntimeError(

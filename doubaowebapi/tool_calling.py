@@ -825,7 +825,7 @@ def filter_history_by_topic(
 
 
 # ── Tool Name Obfuscation ──
-# Doubao's web platform may reject certain tool names that conflict with
+# Dola's web platform may reject certain tool names that conflict with
 # built-in functions (e.g., "Read", "Write", "Search").
 # We obfuscate outgoing names and de-obfuscate incoming names.
 
@@ -1080,7 +1080,7 @@ def build_fewshot_examples(tools: list[dict[str, Any]]) -> list[str]:
 
 # ── Context Offload ──
 # When individual messages are extremely long, compress them aggressively
-# to free up context budget. Unlike Doubao API which uploads files,
+# to free up context budget. Unlike Dola API which uploads files,
 # we use in-place summarization (head + tail + byte count).
 
 # Thresholds for context offload
@@ -1096,7 +1096,7 @@ def offload_long_messages(
 
     For very long messages (typically tool results or system prompts),
     keep head + tail and replace the middle with a size marker.
-    This is the equivalent of Doubao API's context_offload but without
+    This is the equivalent of Dola API's context_offload but without
     requiring file upload infrastructure.
 
     Skips the first part (system prompt) — that's handled by _drop_old_rounds.

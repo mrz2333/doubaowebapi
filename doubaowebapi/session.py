@@ -1,8 +1,9 @@
 """
-Cookie management for Doubao Chat API.
+Cookie management for Dola Chat API.
 
 Supports loading cookies from:
-1. DOUBAO_COOKIE environment variable (Cookie header format)
+1. DOUBAO_COOKIE environment variable (Cookie header format, retains DOUBAO_
+   prefix for backwards compatibility but contains Dola session data)
 2. .doubao_session.json file (written by QR login or /v1/session/update)
 """
 

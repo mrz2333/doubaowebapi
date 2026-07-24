@@ -1,5 +1,5 @@
 """
-Unified API server for Doubao (Playwright browser-based).
+Unified API server for Dola (Playwright browser-based).
 
 Exposes OpenAI-compatible endpoints:
   POST /v1/chat/completions     (chat, streaming & non-streaming)
@@ -14,6 +14,7 @@ Start with:
 from __future__ import annotations
 
 import asyncio
+import base64
 import collections
 import json
 import logging
@@ -47,19 +48,19 @@ _tool_obfuscator = ToolNameObfuscator(enabled=False)
 # ── Model definitions ────────────────────────────────────────
 
 CHAT_MODELS: Dict[str, int] = {
-    "doubao": 0,
-    "doubao-pro": 0,
-    "doubao-think": 1,
-    "doubao-expert": 3,
+    "dola": 0,
+    "dola-pro": 0,
+    "dola-think": 1,
+    "dola-expert": 3,
+    "dola-write": 0,  # writing assistant (alias for dola)
+    "dola-translate": 0,  # translation (alias for dola)
 }
 
 ALL_MODELS = [
-    {"id": m, "object": "model", "owned_by": "doubao", "created": 0}
-    for m in CHAT_MODELS
+    {"id": m, "object": "model", "owned_by": "dola", "created": 0} for m in CHAT_MODELS
 ] + [
-    {"id": "doubao-image", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-music", "object": "model", "owned_by": "doubao", "created": 0},
-    {"id": "doubao-video", "object": "model", "owned_by": "doubao", "created": 0},
+    {"id": "dola-image", "object": "model", "owned_by": "dola", "created": 0},
+    {"id": "dola-video", "object": "model", "owned_by": "dola", "created": 0},
 ]
 
 
@@ -117,16 +118,16 @@ class ExpertQuotaTracker:
         If expert (3) is degraded, falls back to think (1).
         """
         if requested_deep_think == 3 and self.is_degraded:
-            return 1, "doubao-think"
-        model_map = {0: "doubao", 1: "doubao-think", 3: "doubao-expert"}
-        return requested_deep_think, model_map.get(requested_deep_think, "doubao")
+            return 1, "dola-think"
+        model_map = {0: "dola", 1: "dola-think", 3: "dola-expert"}
+        return requested_deep_think, model_map.get(requested_deep_think, "dola")
 
 
 _expert_tracker = ExpertQuotaTracker()
 
 
 def _size_to_ratio(size):
-    """Convert OpenAI size format to Doubao ratio."""
+    """Convert OpenAI size format to Dola ratio."""
     if not size:
         return "1:1"
     size_map = {
@@ -222,7 +223,7 @@ def _save_api_keys():
 
 
 def _mask_key(full_key: str) -> str:
-    """Return a masked prefix for display, e.g. 'doubao-abc...xyz'."""
+    """Return a masked prefix for display, e.g. 'dola-abc...xyz'."""
     if not full_key:
         return ""
     if len(full_key) <= 12:
@@ -283,7 +284,7 @@ class _Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    model: str = "doubao"
+    model: str = "dola"
     messages: List[_Message]
     stream: bool = False
     temperature: Optional[float] = None
@@ -302,7 +303,7 @@ class ChatCompletionRequest(BaseModel):
 
 class ImageGenerationRequest(BaseModel):
     prompt: str
-    model: str = "doubao-image"
+    model: str = "dola-image"
     n: int = 1
     size: Optional[str] = "1024x1024"
     ratio: Optional[str] = None
@@ -324,6 +325,23 @@ def create_app(
 
     # Load persisted API keys on startup
     _load_api_keys()
+
+    # In-memory server log buffer (last 200 lines)
+    import collections
+
+    _server_log_buffer: collections.deque = collections.deque(maxlen=200)
+
+    class _RingHandler(logging.Handler):
+        def emit(self, record):
+            _server_log_buffer.append(self.format(record))
+
+    _ring_handler = _RingHandler()
+    _ring_handler.setFormatter(
+        logging.Formatter(
+            "%(asctime)s %(levelname)s %(name)s: %(message)s", datefmt="%H:%M:%S"
+        )
+    )
+    logging.getLogger("doubaowebapi").addHandler(_ring_handler)
 
     _browser: Dict[str, Any] = {}  # holds BrowserClient instance
 
@@ -358,7 +376,7 @@ def create_app(
         headless = os.environ.get("DOUBAO_HEADLESS", "true").lower() == "true"
         user_data_dir = os.environ.get(
             "DOUBAO_BROWSER_DATA",
-            os.path.join(os.path.expanduser("~"), ".doubao_browser"),
+            os.path.join(os.path.expanduser("~"), ".dola_browser"),
         )
         client = BrowserClient(headless=headless, user_data_dir=user_data_dir)
         await client.start()
@@ -381,7 +399,7 @@ def create_app(
             await client.stop()
 
     app = FastAPI(
-        title="Doubao API",
+        title="Dola API",
         version=__import__("doubaowebapi").__version__,
         lifespan=lifespan,
     )
@@ -456,12 +474,12 @@ def create_app(
         auth = request.headers.get("Authorization", "")
         if auth.startswith("Bearer "):
             return auth[7:].strip()
-        # Cookie: doubao_admin_token=<token>
+        # Cookie: dola_admin_token=<token>
         cookie_header = request.headers.get("Cookie", "")
         for part in cookie_header.split(";"):
             part = part.strip()
-            if part.startswith("doubao_admin_token="):
-                return part[len("doubao_admin_token=") :]
+            if part.startswith("dola_admin_token="):
+                return part[len("dola_admin_token=") :]
         return ""
 
     def _check_session_auth(request: Request) -> None:
@@ -498,7 +516,7 @@ def create_app(
                 return True
         return False
 
-    def _get_client() -> BrowserClient:
+    async def _get_client() -> BrowserClient:
         client = _browser.get("client")
         if client is None:
             raise HTTPException(status_code=503, detail="Browser not initialized")
@@ -507,11 +525,32 @@ def create_app(
                 status_code=503,
                 detail="Not logged in. Visit /auth to scan QR code.",
             )
+        # If captcha flagged, try a lazy re-check of fetch hook before rejecting
         if client.needs_captcha:
-            raise HTTPException(
-                status_code=503,
-                detail="Captcha verification required (710022004). Please complete captcha via VNC or re-login.",
-            )
+            try:
+                hooked = await client._page.evaluate(
+                    "() => { try { const s = window.fetch.toString(); return !s.includes('native code'); } catch(e) { return false; } }"
+                )
+                if hooked:
+                    log.info(
+                        "Lazy re-check: fetch hook is active, clearing needs_captcha"
+                    )
+                    client._needs_captcha = False
+                    client._fetch_hook_confirmed = True
+                    client.record_success()
+                else:
+                    raise HTTPException(
+                        status_code=503,
+                        detail="Captcha verification required (710022004). Please complete captcha via VNC or re-login.",
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                log.warning("Lazy re-check failed: %s", e)
+                raise HTTPException(
+                    status_code=503,
+                    detail="Captcha verification required (710022004). Please complete captcha via VNC or re-login.",
+                )
         return client
 
     def _extract_prompt(messages: List[_Message]) -> str:
@@ -534,11 +573,18 @@ def create_app(
                                 parts.append(f"[{msg.role}]: {text}")
         return "\n".join(parts)
 
-    def _extract_prompt_and_file_refs(
+    def _extract_prompt_and_refs(
         messages: List[_Message],
-    ) -> tuple[str, list[dict[str, Any]]]:
-        """Extract text prompt and OpenAI-style file_url references."""
+    ) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
+        """Extract text prompt, image_url refs, and file_url refs separately.
+
+        Returns:
+            (prompt, image_refs, file_refs) where:
+            - image_refs: list of {"url": "data:image/..."} for vision
+            - file_refs: list of {"url": "...", "name": ..., "size": ...} for file upload
+        """
         parts: list[str] = []
+        image_refs: list[dict[str, Any]] = []
         file_refs: list[dict[str, Any]] = []
         for msg in messages:
             if isinstance(msg.content, str):
@@ -559,13 +605,72 @@ def create_app(
                             parts.append(text)
                         else:
                             parts.append(f"[{msg.role}]: {text}")
+                elif part.get("type") == "image_url":
+                    # OpenAI vision format: {type: "image_url", image_url: {url: "data:..."}}
+                    image_url = part.get("image_url", {})
+                    if isinstance(image_url, str):
+                        image_refs.append({"url": image_url})
+                    elif isinstance(image_url, dict):
+                        url = image_url.get("url", "")
+                        if url:
+                            image_refs.append({"url": url})
                 elif part.get("type") == "file_url":
                     file_url = part.get("file_url", {})
                     if isinstance(file_url, str):
                         file_refs.append({"url": file_url})
                     elif isinstance(file_url, dict):
                         file_refs.append(file_url)
-        return "\n".join(parts), file_refs
+        return "\n".join(parts), image_refs, file_refs
+
+    async def _materialize_image_refs(
+        client: BrowserClient, image_refs: list[dict[str, Any]]
+    ) -> list[dict[str, Any]]:
+        """Resolve data:/http image_url references to uploaded image metadata for vision.
+
+        Returns list of dicts with keys: uri, cdn_url, format, width, height.
+        """
+        images: list[dict[str, Any]] = []
+        for ref in image_refs:
+            url = ref.get("url", "")
+            if not url:
+                raise HTTPException(status_code=400, detail="image_url.url is required")
+            if url.startswith("data:"):
+                try:
+                    header, encoded = url.split(",", 1)
+                    image_data = base64.b64decode(encoded)
+                except (ValueError, TypeError) as exc:
+                    raise HTTPException(
+                        status_code=400, detail="Invalid image data URI"
+                    ) from exc
+                # Detect format from mime type
+                mime = header[5:].split(";", 1)[0]  # e.g. "image/png"
+                fmt = mime.split("/", 1)[-1] if "/" in mime else "png"
+                if fmt == "jpeg":
+                    fmt = "jpg"
+                uploaded = await client.upload_image(
+                    image_bytes=image_data, filename=f"image.{fmt}"
+                )
+                images.append(uploaded)
+                continue
+            if url.startswith("http://") or url.startswith("https://"):
+                http_client = client._http or httpx.AsyncClient(timeout=120)
+                response = await http_client.get(url)
+                response.raise_for_status()
+                image_data = response.content
+                # Detect format from content-type or URL
+                ct = response.headers.get("content-type", "")
+                fmt = ct.split("/")[-1] if "/" in ct else "png"
+                if fmt == "jpeg":
+                    fmt = "jpg"
+                uploaded = await client.upload_image(
+                    image_bytes=image_data, filename=f"image.{fmt}"
+                )
+                images.append(uploaded)
+                continue
+            raise HTTPException(
+                status_code=400, detail=f"Unsupported image_url: {url[:80]}"
+            )
+        return images
 
     async def _materialize_file_refs(
         client: BrowserClient, file_refs: list[dict[str, Any]]
@@ -635,13 +740,16 @@ def create_app(
     @app.middleware("http")
     async def _log_requests(request: Request, call_next):
         path = request.url.path
-        # Skip admin/auth/static endpoints from logging
+        # Skip admin/auth/static/health endpoints from logging
         if (
             path.startswith("/auth")
             or path.startswith("/admin")
             or path.startswith("/api/auth")
+            or path.startswith("/static")
             or path == "/health"
             or path.startswith("/v1/session/qr-login")
+            or path.startswith("/docs")
+            or path.startswith("/openapi")
         ):
             return await call_next(request)
 
@@ -726,7 +834,7 @@ def create_app(
         has_tools = bool(body.tools)
         if has_tools:
             # Use expert model for tool calling, with auto-fallback to think if degraded
-            requested_deep_think = CHAT_MODELS["doubao-expert"]
+            requested_deep_think = CHAT_MODELS["dola-expert"]
             use_deep_think, model_name = _expert_tracker.get_effective_mode(
                 requested_deep_think
             )
@@ -742,37 +850,45 @@ def create_app(
                     detail=f"Unknown model '{body.model}'. Available: {', '.join(all_models)}",
                 )
             model_name = body.model
-            prompt, file_refs = _extract_prompt_and_file_refs(body.messages)
-            if not prompt:
+            prompt, image_refs, file_refs = _extract_prompt_and_refs(body.messages)
+            if not prompt and not image_refs and not file_refs:
                 raise HTTPException(status_code=400, detail="No text content")
+            # Allow empty text when images/files are present (vision / file-QA)
+            if not prompt:
+                prompt = "请描述这张图片" if image_refs else "请分析这个文件"
 
         await bucket.acquire()
-        client = _get_client()
+        client = await _get_client()
         request_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
 
         if body.stream:
             if not has_tools:
-                _, file_refs_check = _extract_prompt_and_file_refs(body.messages)
-                if file_refs_check:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="file_url attachments are currently supported for non-streaming requests only",
+                _, image_refs_check, file_refs_check = _extract_prompt_and_refs(
+                    body.messages
+                )
+                if file_refs_check or image_refs_check:
+                    # Auto-downgrade: attachments/images require non-streaming path,
+                    # so collect the full response and return as non-streaming
+                    body.stream = False
+                else:
+                    return StreamingResponse(
+                        _stream_chat(
+                            client,
+                            prompt,
+                            use_deep_think,
+                            request_id,
+                            model_name,
+                            conversation_id=body.conversation_id,
+                            bot_id=body.bot_id,
+                            has_tools=has_tools,
+                            messages_for_counting=body.messages,
+                        ),
+                        media_type="text/event-stream",
+                        headers={
+                            "Cache-Control": "no-cache",
+                            "X-Accel-Buffering": "no",
+                        },
                     )
-            return StreamingResponse(
-                _stream_chat(
-                    client,
-                    prompt,
-                    use_deep_think,
-                    request_id,
-                    model_name,
-                    conversation_id=body.conversation_id,
-                    bot_id=body.bot_id,
-                    has_tools=has_tools,
-                    messages_for_counting=body.messages,
-                ),
-                media_type="text/event-stream",
-                headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-            )
 
         # Non-streaming: collect all chunks with thinking state machine
         try:
@@ -801,6 +917,33 @@ def create_app(
                     finish_reason = "tool_calls"
                 else:
                     finish_reason = "stop"
+            elif image_refs:
+                # Vision: upload images then chat with attachments
+                uploaded_images = await _materialize_image_refs(client, image_refs)
+                full_text = ""
+                conv_id = None
+                async for event in client.chat_completion(
+                    text=prompt,
+                    conversation_id=body.conversation_id,
+                    bot_id=body.bot_id,
+                    use_deep_think=use_deep_think,
+                    image_attachments=uploaded_images,
+                ):
+                    if event.get("error"):
+                        raise RuntimeError(
+                            f"Vision chat error: {event.get('body', '')[:200]}"
+                        )
+                    chunk = client._extract_text(event)
+                    if chunk:
+                        full_text += chunk
+                    if not conv_id:
+                        cid = client.extract_conversation_id(event)
+                        if cid and cid != "0":
+                            conv_id = cid
+                message = {"role": "assistant", "content": full_text}
+                if conv_id:
+                    message["conversation_id"] = conv_id
+                finish_reason = "stop"
             elif file_refs:
                 files = await _materialize_file_refs(client, file_refs)
                 result = await client.chat_with_file(
@@ -822,7 +965,14 @@ def create_app(
                 )
                 finish_reason = "stop"
         except RuntimeError as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
+            exc_str = str(exc)
+            # 710022002 rate-limit → return 429 with retry hint
+            if "710022002" in exc_str:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Rate limited by upstream: {exc_str}",
+                )
+            raise HTTPException(status_code=502, detail=exc_str)
 
         # max_tokens truncation (non-streaming only)
         content = message.get("content") or ""
@@ -871,7 +1021,7 @@ def create_app(
     async def image_generations(body: ImageGenerationRequest, request: Request):
         _check_auth(request)
         await bucket.acquire()
-        client = _get_client()
+        client = await _get_client()
 
         ratio = body.ratio or _size_to_ratio(body.size)
 
@@ -910,42 +1060,11 @@ def create_app(
             }
         )
 
-    @app.post("/v1/audio/generations")
-    async def audio_generations(request: Request):
-        _check_auth(request)
-        await bucket.acquire()
-        client = _get_client()
-
-        body = await request.json()
-        prompt = body.get("prompt", "")
-        if not prompt:
-            raise HTTPException(status_code=400, detail="Missing prompt")
-
-        try:
-            result = await client.generate_music(
-                prompt=prompt,
-                lyric=body.get("lyric"),
-                genre=body.get("genre"),
-            )
-        except RuntimeError as exc:
-            raise HTTPException(status_code=502, detail=str(exc))
-
-        tracks = result.get("tracks", [])
-        if not tracks:
-            raise HTTPException(status_code=502, detail="No music tracks generated")
-
-        return JSONResponse(
-            {
-                "created": int(time.time()),
-                "data": tracks,
-            }
-        )
-
     @app.post("/v1/video/generations")
     async def video_generations(request: Request):
         _check_auth(request)
         await bucket.acquire()
-        client = _get_client()
+        client = await _get_client()
 
         body = await request.json()
         prompt = body.get("prompt", "")
@@ -987,7 +1106,7 @@ def create_app(
         """Upload a file. Returns file metadata for use in chat."""
         _check_auth(request)
         await bucket.acquire()
-        client = _get_client()
+        client = await _get_client()
 
         form = await request.form()
         file_field = form.get("file")
@@ -1018,7 +1137,7 @@ def create_app(
     async def file_download(request: Request, uri: str, expire: int = 3600):
         _check_auth(request)
         await bucket.acquire()
-        client = _get_client()
+        client = await _get_client()
         try:
             url = await client.get_file_download_url(uri=uri, expire_seconds=expire)
         except RuntimeError as exc:
@@ -1029,7 +1148,7 @@ def create_app(
     async def upload_image(request: Request):
         _check_auth(request)
         await bucket.acquire()
-        client = _get_client()
+        client = await _get_client()
         form = await request.form()
         upload = form.get("file") or form.get("image")
         if not upload:
@@ -1059,14 +1178,14 @@ def create_app(
         """Chat with file attachment. Body: {file_id, prompt, model}."""
         _check_auth(request)
         await bucket.acquire()
-        client = _get_client()
+        client = await _get_client()
 
         body = await request.json()
         file_id = body.get("file_id", "")
         prompt = body.get("prompt", "")
         file_name = body.get("file_name", "file.txt")
         file_size = body.get("file_size", 0)
-        model = body.get("model", "doubao")
+        model = body.get("model", "dola")
 
         if not file_id or not prompt:
             raise HTTPException(status_code=400, detail="Missing file_id or prompt")
@@ -1775,7 +1894,7 @@ def create_app(
         if expires_days is not None and expires_days <= 0:
             expires_days = None
         key_id = "key-" + secrets.token_urlsafe(8)
-        full_key = "doubao-" + secrets.token_urlsafe(24)
+        full_key = "dola-" + secrets.token_urlsafe(24)
         now = time.time()
         expires_at = now + expires_days * 86400 if expires_days else None
         info: Dict[str, Any] = {
@@ -1900,9 +2019,8 @@ def create_app(
                 "cdp_url": os.environ.get("DOUBAO_CDP_URL", ""),
                 "models": {
                     "chat": list(CHAT_MODELS.keys()),
-                    "image": ["doubao-image"],
-                    "video": ["doubao-video"],
-                    "audio": ["doubao-music"],
+                    "image": ["dola-image"],
+                    "video": ["dola-video"],
                 },
             }
         )
@@ -2011,18 +2129,64 @@ def create_app(
 
     @app.post("/auth/reset_captcha")
     async def reset_captcha(request: Request):
-        """Reset captcha flag and reinitialize fetch bridge after manual login via VNC."""
+        """Reset captcha flag and reinitialize fetch bridge after manual login via VNC.
+
+        If fetch hook / frontierSign are missing, force a page reload to re-inject them.
+        """
         _check_session_auth(request)
         client = _browser.get("client")
         if client is None:
             raise HTTPException(status_code=503, detail="Browser not initialized")
+
+        # Check if fetch hook / frontierSign are actually available
+        hook_ok = False
+        sign_ok = False
+        try:
+            hook_ok = await client._page.evaluate(
+                "typeof window.__orig_fetch === 'function'"
+            )
+        except Exception:
+            pass
+        try:
+            sign_ok = await client._page.evaluate(
+                "typeof window.bdms?.frontierSign === 'function'"
+            )
+        except Exception:
+            pass
+
+        if not hook_ok or not sign_ok:
+            log.warning(
+                "reset_captcha: fetch_hook=%s frontierSign=%s — forcing page reload",
+                hook_ok,
+                sign_ok,
+            )
+            try:
+                await client._page.reload(wait_until="load", timeout=60000)
+                await asyncio.sleep(5)
+                await client._apply_anti_detection_patches()
+                await client._check_login_state()
+                # Re-check after reload
+                try:
+                    hook_ok = await client._page.evaluate(
+                        "typeof window.__orig_fetch === 'function'"
+                    )
+                except Exception:
+                    pass
+                try:
+                    sign_ok = await client._page.evaluate(
+                        "typeof window.bdms?.frontierSign === 'function'"
+                    )
+                except Exception:
+                    pass
+                log.info(
+                    "reset_captcha: after reload — fetch_hook=%s frontierSign=%s",
+                    hook_ok,
+                    sign_ok,
+                )
+            except Exception as e:
+                log.error("reset_captcha: page reload failed: %s", e)
+
         client.record_success()
-        # Re-run login check to extract params and initialize fetch bridge
-        # (needed after VNC login because the page URL changes and
-        # expose_function bindings are lost)
-        await client._check_login_state()
-        # Ensure _ready is set even if _check_login_state couldn't confirm
-        # (e.g. page still loading or race condition during VNC login)
         if not client.is_ready:
             log.warning(
                 "reset_captcha: _check_login_state did not confirm login, forcing _ready=True as fallback"
@@ -2030,7 +2194,7 @@ def create_app(
             client._ready = True
         return {
             "status": "ok",
-            "message": "Login state rechecked, fetch bridge reinitialized.",
+            "message": f"Reset complete. fetch_hook={hook_ok}, frontierSign={sign_ok}",
         }
 
     @app.post("/auth/save_session")
@@ -2075,6 +2239,11 @@ def create_app(
     @app.get("/admin/api/status")
     async def admin_api_status(request: Request):
         return await _get_login_status(request)
+
+    @app.get("/admin/api/server-logs")
+    async def admin_server_logs(request: Request):
+        _check_session_auth(request)
+        return {"logs": list(_server_log_buffer)}
 
     async def _get_login_status(request: Request):
         _check_session_auth(request)
@@ -2198,7 +2367,7 @@ def create_app(
                 {
                     "status": "qr_ready",
                     "qr_image_base64": qr_b64,
-                    "message": "请用豆包 App 扫码。轮询 GET /v1/session/qr-login 获取状态。",
+                    "message": "请用Dola App 扫码。轮询 GET /v1/session/qr-login 获取状态。",
                 }
             )
         else:
@@ -2259,7 +2428,7 @@ def run_server():
 
     app = create_app(api_key=api_key or None, rpm_limit=rpm)
 
-    print("\n  Doubao API Server (Playwright)")
+    print("\n  Dola API Server (Playwright)")
     print(f"  Listening on http://{host}:{port}")
     print(f"  Admin page: http://{host}:{port}/admin  (login with DOUBAO_API_KEY)")
     if novnc_url:

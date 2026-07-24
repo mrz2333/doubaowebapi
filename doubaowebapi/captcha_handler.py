@@ -77,7 +77,7 @@ class AutoCaptchaHandler(CaptchaHandler):
         self._server.push_challenge(
             {
                 "aid": "582478",
-                "appName": "doubao",
+                "appName": "dola",
                 "lang": "zh",
                 "did": device_id,
                 "fp": fp,

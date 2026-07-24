@@ -1,5 +1,5 @@
 """
-Doubao Chat API Client - reverse-engineered desktop client protocol.
+Dola Chat API Client - reverse-engineered desktop client protocol.
 
 Supports three endpoint families:
   - stream_call_bot (Alice legacy)
@@ -238,8 +238,8 @@ class UploadedFile:
     file_type: str = ""
 
 
-DEFAULT_BOT_ID = "7234781073513644036"
-EXTENSION_BOT_ID = "7338286299411103781"
+DEFAULT_BOT_ID = "7339470689562525703"
+EXTENSION_BOT_ID = "7339470689562525703"
 
 # Supported file extensions for upload (from frontend source)
 UPLOAD_SUPPORTED_EXTENSIONS = {
@@ -379,7 +379,7 @@ def _aws_sign_v4(
 
 class DoubaoChatClient:
     """
-    Async client for Doubao's internal chat API (stream_call_bot).
+    Async client for Dola's internal chat API (stream_call_bot).
 
     Usage:
         async with DoubaoChatClient(cookies, ms_token=token) as client:
@@ -498,8 +498,8 @@ class DoubaoChatClient:
 
     def _security_params(self) -> Dict[str, str]:
         params = {
-            "aid": "497858",
-            "real_aid": "497858",
+            "aid": "582478",
+            "real_aid": "582478",
             "device_id": self.device_id,
             "tea_uuid": self.device_id,
             "web_id": self.web_id,
@@ -1415,7 +1415,7 @@ class DoubaoChatClient:
         return result
 
     async def delete_conversation(self, conversation_id: str) -> bool:
-        """Delete a conversation from Doubao to keep the sidebar clean.
+        """Delete a conversation from Dola to keep the sidebar clean.
 
         Uses POST /samantha/thread/delete with the conversation_id (as thread_id)
         obtained from the SSE_ACK event during chat completion.
@@ -1471,7 +1471,7 @@ class DoubaoChatClient:
         ratio: Optional[str] = None,
         ref_image_key: Optional[str] = None,
     ) -> "ImageGenerationResult":
-        """Generate images using Doubao's AI image generation.
+        """Generate images using Dola's AI image generation.
 
         Uses /samantha/chat/completion with content_type=2009 (SamanthaImageInput)
         and skill_type=3 (SkillImageGen).
@@ -1631,7 +1631,7 @@ class DoubaoChatClient:
         ref_image_key: Optional[str] = None,
         timeout: float = 300,
     ) -> "VideoGenerationResult":
-        """Generate video using Doubao's AI video generation.
+        """Generate video using Dola's AI video generation.
 
         Uses /samantha/chat/completion with content_type=2020
         (SamanthaVideoGenerationInput) and skill_type=17 (SkillVideoGeneration).
@@ -1903,7 +1903,7 @@ class DoubaoChatClient:
         theme: Optional[str] = None,
         generation_type: Optional[str] = None,
     ) -> "MusicGenerationResult":
-        """Generate music using Doubao's AI music generation.
+        """Generate music using Dola's AI music generation.
 
         Uses /samantha/chat/completion with content_type=2005
         (SamanthaMusicGenInput) and skill_type=9 (SkillMusicGen).
@@ -2122,7 +2122,7 @@ class DoubaoChatClient:
         file_data: bytes,
         filename: str,
     ) -> "UploadedFile":
-        """Upload a file to Doubao's storage (ByteDance TOS via ImageX proxy).
+        """Upload a file to Dola's storage (ByteDance TOS via ImageX proxy).
 
         Supported formats: PDF, TXT, DOCX, XLSX, PPTX, CSV, MD, code files,
         images, and more (see UPLOAD_SUPPORTED_EXTENSIONS).
